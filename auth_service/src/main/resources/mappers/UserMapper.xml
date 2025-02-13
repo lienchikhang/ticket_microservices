@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<mapper namespace="com.ticketbox.auth_service.interfaceMappers.UserMapperInterface">
+
+    <select id="findRoleById" resultMap="userResultMap">
+        SELECT id, role_name
+        FROM role
+        WHERE id = #{roleId}
+    </select>
+
+
+    <resultMap id="userResultMap" type="com.ticketbox.auth_service.entity.Role">
+        <id column="id" property="roleId" javaType="int" jdbcType="INTEGER"  />
+        <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
+    </resultMap>
+</mapper>
