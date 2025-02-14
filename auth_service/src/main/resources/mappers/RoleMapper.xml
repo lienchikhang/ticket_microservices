@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ticketbox.auth_service.mappers.RoleMapper">
+
+    <!--insert-->
+    <insert id="addRole"
+            keyColumn="role_id"
+            parameterType="com.ticketbox.auth_service.entity.Role"
+            useGeneratedKeys="true"
+            keyProperty="roleId">
+        INSERT INTO Role (role_name)
+        values (#{roleName});
+    </insert>
+
+    <select id="findRoleById" resultMap="userResultMap">
+        SELECT role_id, role_name
+        FROM Role
+        WHERE id = #{roleId}
+    </select>
+
+    <select id="findRoleByName" resultMap="userResultMap" parameterType="String" >
+        SELECT role_id, role_name
+        FROM Role
+        WHERE role_name = #{roleName}
+    </select>
+
+
+    <resultMap id="userResultMap" type="com.ticketbox.auth_service.entity.Role">
+        <id column="role_id" property="roleId" javaType="int" jdbcType="INTEGER"  />
+        <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
+    </resultMap>
+</mapper>

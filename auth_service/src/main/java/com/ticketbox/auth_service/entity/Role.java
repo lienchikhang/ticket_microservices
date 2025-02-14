@@ -1,5 +1,6 @@
 package com.ticketbox.auth_service.entity;
 
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,3 +13,5 @@ public class Role {
     int roleId;
     String roleName;
 }
+
+
