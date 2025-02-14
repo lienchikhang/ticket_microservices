@@ -19,7 +19,7 @@ spring:
     baseline-on-migrate: true
 
 mybatis:
-#  mapper-locations: classpath:/mappers/*.xml (chỉ dùng khi không annotate cho interface)
+  mapper-locations: classpath:mappers/*Mapper.xml
   configuration:
     map-underscore-to-camel-case: true
 
