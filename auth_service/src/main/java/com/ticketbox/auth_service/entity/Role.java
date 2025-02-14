@@ -12,6 +12,7 @@ import lombok.experimental.FieldDefaults;
 public class Role {
     int roleId;
     String roleName;
+    Boolean isActive;
 }
 
 

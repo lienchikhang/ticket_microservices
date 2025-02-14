@@ -1,6 +1,7 @@
 package com.ticketbox.auth_service.service.impl;
 
 import com.ticketbox.auth_service.dto.request.RoleCreateReq;
+import com.ticketbox.auth_service.dto.request.RoleUpdateReq;
 import com.ticketbox.auth_service.dto.response.RoleRes;
 import com.ticketbox.auth_service.entity.Role;
 import com.ticketbox.auth_service.enums.ErrorEnum;
@@ -14,9 +15,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -44,22 +43,39 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleRes delete(int id) {
-        return null;
+        //checking exist
+        Role role = mapper.findRoleById(id).orElseThrow(() -> new AppException(ErrorEnum.ROLE_NOT_FOUND));
+
+        //update
+        role.setIsActive(false);
+        mapper.updateRole(role);
+
+        return roleStruct.toRes(role);
     }
 
     @Override
-    public RoleRes update(int id, Role newRole) {
-        return null;
+    public RoleRes update(int id, RoleUpdateReq roleUpdateReq) {
+
+        //checking exist
+        Role role = mapper.findRoleById(id).orElseThrow(() -> new AppException(ErrorEnum.ROLE_NOT_FOUND));
+
+        //update
+        role.setRoleName(roleUpdateReq.getRoleName());
+        mapper.updateRole(role);
+
+        return roleStruct.toRes(role);
     }
 
     @Override
     public RoleRes get(int id) {
-        return null;
+        return roleStruct.toRes(mapper.findRoleById(id)
+                .orElseThrow(() -> new AppException(ErrorEnum.ROLE_NOT_FOUND)));
     }
 
     @Override
-    public List<RoleRes> getAll() {
-        return List.of();
+    public List<RoleRes> getAll(String direction, int page, int pageSize) {
+        return mapper.findAll(direction, (page - 1) * pageSize, pageSize).stream()
+                .map(roleStruct::toRes).toList();
     }
 
 

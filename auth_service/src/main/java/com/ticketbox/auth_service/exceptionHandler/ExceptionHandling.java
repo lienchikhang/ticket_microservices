@@ -18,24 +18,22 @@ public class ExceptionHandling {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<AppResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
 
-        log.info("has errror");
-
         ErrorEnum error;
 
          try {
              error = ErrorEnum.valueOf(e.getBindingResult().getFieldError().getDefaultMessage());
-             log.info("error msg {}", error.getMessage());
-             log.info("error code{}", error.getCode());
 
              return new ResponseEntity<>(AppResponse.builder()
                      .code(error.getCode())
+                     .statusCode(error.getStatusCode())
                      .message(error.getMessage())
                      .build(), HttpStatus.BAD_REQUEST);
 
          } catch (IllegalArgumentException iae) {
              return new ResponseEntity<>(AppResponse.builder()
                      .code(9999)
-                     .message("No such error code")
+                     .statusCode(500)
+                     .message("No such error enum")
                      .build(), HttpStatus.INTERNAL_SERVER_ERROR);
          }
 

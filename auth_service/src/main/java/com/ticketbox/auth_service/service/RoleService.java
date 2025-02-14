@@ -1,6 +1,7 @@
 package com.ticketbox.auth_service.service;
 
 import com.ticketbox.auth_service.dto.request.RoleCreateReq;
+import com.ticketbox.auth_service.dto.request.RoleUpdateReq;
 import com.ticketbox.auth_service.dto.response.RoleRes;
 import com.ticketbox.auth_service.entity.Role;
 
@@ -12,9 +13,9 @@ public interface RoleService {
 
     RoleRes delete(int id);
 
-    RoleRes update(int id, Role newRole);
+    RoleRes update(int id, RoleUpdateReq newRole);
 
     RoleRes get(int id);
 
-    List<RoleRes> getAll();
+    List<RoleRes> getAll(String direction, int page, int pageSize);
 }

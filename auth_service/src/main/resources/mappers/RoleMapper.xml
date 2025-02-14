@@ -12,21 +12,40 @@
         values (#{roleName});
     </insert>
 
+    <!--update-->
+    <update id="updateRole" parameterType="com.ticketbox.auth_service.entity.Role">
+        update Role
+        <set>
+            <if test="roleName != null">role_name = #{roleName},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+        </set>
+        where role_id = #{roleId}
+    </update>
+
+    <!--queries-->
     <select id="findRoleById" resultMap="userResultMap">
-        SELECT role_id, role_name
+        SELECT role_id, role_name, is_active
         FROM Role
-        WHERE id = #{roleId}
+        WHERE role_id = #{roleId}
     </select>
 
     <select id="findRoleByName" resultMap="userResultMap" parameterType="String" >
-        SELECT role_id, role_name
+        SELECT role_id, role_name, is_active
         FROM Role
         WHERE role_name = #{roleName}
     </select>
 
+    <select id="findAll" resultMap="userResultMap">
+        SELECT role_id, role_name, is_active
+        FROM Role
+        ORDER BY role_id
+        LIMIT #{pageSize} OFFSET #{offSet}
+    </select>
 
-    <resultMap id="userResultMap" type="com.ticketbox.auth_service.entity.Role">
+
+    <resultMap id="userResultMap" type="com.ticketbox.auth_service.entity.Role" >
         <id column="role_id" property="roleId" javaType="int" jdbcType="INTEGER"  />
         <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="Boolean" />
     </resultMap>
 </mapper>
