@@ -8,13 +8,13 @@
             parameterType="com.ticketbox.auth_service.entity.Role"
             useGeneratedKeys="true"
             keyProperty="roleId">
-        INSERT INTO Role (role_name)
+        INSERT INTO Roles (role_name)
         values (#{roleName});
     </insert>
 
     <!--update-->
     <update id="updateRole" parameterType="com.ticketbox.auth_service.entity.Role">
-        update Role
+        update Roles
         <set>
             <if test="roleName != null">role_name = #{roleName},</if>
             <if test="isActive != null">is_active = #{isActive},</if>
@@ -25,19 +25,19 @@
     <!--queries-->
     <select id="findRoleById" resultMap="userResultMap">
         SELECT role_id, role_name, is_active
-        FROM Role
+        FROM Roles
         WHERE role_id = #{roleId}
     </select>
 
     <select id="findRoleByName" resultMap="userResultMap" parameterType="String" >
         SELECT role_id, role_name, is_active
-        FROM Role
+        FROM Roles
         WHERE role_name = #{roleName}
     </select>
 
     <select id="findAll" resultMap="userResultMap">
         SELECT role_id, role_name, is_active
-        FROM Role
+        FROM Roles
         ORDER BY role_id
         LIMIT #{pageSize} OFFSET #{offSet}
     </select>
