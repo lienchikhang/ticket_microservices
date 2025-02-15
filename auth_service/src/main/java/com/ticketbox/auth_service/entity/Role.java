@@ -13,6 +13,8 @@ public class Role {
     int roleId;
     String roleName;
     Boolean isActive;
+
+
 }
 
 

@@ -13,7 +13,12 @@ public enum ErrorEnum {
     ROLE_NOT_FOUND(1000, 404, "Role not found!"),
     ROLE_ALREADY_EXISTS(1001, 400, "Role has already exists!"),
     INVALID_ROLE_NAME(1002, 400, "Invalid role name!"),
-    NOT_EMPTY_ROLE(1003, 400, "Role must not be empty!");
+    NOT_EMPTY_ROLE(1003, 400, "Role must not be empty!"),
+
+    AUTHORITY_NOT_FOUND(1004, 404, "Authority not found!"),
+    AUTHORITY_ALREADY_EXISTS(1005, 400, "Authority has already exists!"),
+    INVALID_AUTHORITY_NAME(1006, 400, "Invalid Authority name!"),
+    NOT_EMPTY_AUTHORITY(1007, 400, "Authority must not be empty!");
 
     ErrorEnum(int code, int statusCode, String message) {
         this.code = code;

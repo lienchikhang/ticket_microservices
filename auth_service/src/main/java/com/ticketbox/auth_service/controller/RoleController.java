@@ -3,6 +3,7 @@ package com.ticketbox.auth_service.controller;
 import com.ticketbox.auth_service.dto.request.RoleCreateReq;
 import com.ticketbox.auth_service.dto.request.RoleUpdateReq;
 import com.ticketbox.auth_service.dto.response.AppResponse;
+import com.ticketbox.auth_service.dto.response.PageRes;
 import com.ticketbox.auth_service.dto.response.RoleRes;
 import com.ticketbox.auth_service.service.RoleService;
 import jakarta.validation.Valid;
@@ -33,12 +34,12 @@ public class RoleController {
     }
 
     @GetMapping
-    public AppResponse<List<RoleRes>> getAllRoles(
+    public AppResponse<PageRes<List<RoleRes>>> getAllRoles(
             @RequestParam(name = "direction", defaultValue = "asc") String direction,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "pageSize", defaultValue = "6") int pageSize
     ) {
-        return AppResponse.<List<RoleRes>>builder()
+        return AppResponse.<PageRes<List<RoleRes>>>builder()
                 .statusCode(200)
                 .message("Get successful!")
                 .data(roleService.getAll(direction, page, pageSize))
