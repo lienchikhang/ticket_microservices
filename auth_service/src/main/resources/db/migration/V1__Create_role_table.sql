@@ -1,4 +1,4 @@
-create table Role
+create table Roles
 (
     role_id   int primary key not null auto_increment,
     role_name varchar(20)     not null unique,

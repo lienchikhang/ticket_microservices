@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ticketbox.auth_service.mappers.AuthorityMapper">
+
+    <!--insert-->
+    <insert id="addAuthority"
+            parameterType="com.ticketbox.auth_service.entity.Authority"
+            keyColumn="authority_id"
+            keyProperty="authorityId"
+            useGeneratedKeys="true">
+        insert into Authorities (authority_name, created_at, updated_at)
+        values (#{authorityName}, now(), now())
+    </insert>
+
+    <!--select-->
+    <select id="findAll" resultMap="authorityResultMap">
+        select *
+        from Authorities
+        <if test="sort != null">
+            order by ${sort}
+        </if>
+        <choose>
+            <when test="direction == 'desc'">desc</when>
+            <otherwise>asc</otherwise>
+        </choose>
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <!--update-->
+    <update id="updateAuthority" parameterType="com.ticketbox.auth_service.entity.Authority">
+        update Authorities
+        set updated_at = NOW()
+        <set>
+            <if test="authorityName != null">authority_name = #{authorityName},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+        </set>
+        where authority_id = #{authorityId}
+    </update>
+
+    <!--resultMap-->
+    <resultMap id="authorityResultMap" type="com.ticketbox.auth_service.entity.Authority">
+        <id column="authority_id" property="authorityId" javaType="int" jdbcType="int" />
+        <result column="authority_name" property="authorityName" jdbcType="varchar" javaType="String"/>
+        <result column="is_active" property="isActive" jdbcType="boolean" javaType="boolean"/>
+        <result column="created_at" property="createdAt" jdbcType="datetime" javaType="LocalDatetime"/>
+        <result column="updated_at" property="updatedAt" jdbcType="datetime" javaType="LocalDatetime"/>
+    </resultMap>
+</mapper>
