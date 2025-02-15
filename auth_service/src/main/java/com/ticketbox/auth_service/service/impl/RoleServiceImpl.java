@@ -2,10 +2,13 @@ package com.ticketbox.auth_service.service.impl;
 
 import com.ticketbox.auth_service.dto.request.RoleCreateReq;
 import com.ticketbox.auth_service.dto.request.RoleUpdateReq;
+import com.ticketbox.auth_service.dto.response.PageRes;
 import com.ticketbox.auth_service.dto.response.RoleRes;
+import com.ticketbox.auth_service.entity.Authority;
 import com.ticketbox.auth_service.entity.Role;
 import com.ticketbox.auth_service.enums.ErrorEnum;
 import com.ticketbox.auth_service.exceptionHandler.AppException;
+import com.ticketbox.auth_service.mappers.AuthorityMapper;
 import com.ticketbox.auth_service.mappers.RoleMapper;
 import com.ticketbox.auth_service.mapstruct.RoleStruct;
 import com.ticketbox.auth_service.service.RoleService;
@@ -24,6 +27,7 @@ import java.util.*;
 public class RoleServiceImpl implements RoleService {
 
     RoleMapper mapper;
+    AuthorityMapper authorityMapper;
     RoleStruct roleStruct;
 
     @Override
@@ -39,6 +43,11 @@ public class RoleServiceImpl implements RoleService {
 
         //return
         return roleStruct.toRes(roleStruct.toRole(role));
+    }
+
+    @Override
+    public RoleRes addAuthorities(List<Authority> authors) {
+        return null;
     }
 
     @Override
@@ -73,9 +82,19 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<RoleRes> getAll(String direction, int page, int pageSize) {
-        return mapper.findAll(direction, (page - 1) * pageSize, pageSize).stream()
+    public PageRes<List<RoleRes>> getAll(String direction, int page, int pageSize) {
+
+        List<RoleRes> roles = mapper.findAll(direction, (page - 1) * pageSize, pageSize).stream()
                 .map(roleStruct::toRes).toList();
+
+        int totalItem = mapper.count();
+
+        return PageRes.<List<RoleRes>>builder()
+                .page(page)
+                .pageSize(pageSize)
+                .items(roles)
+                .totalItem(totalItem)
+                .build();
     }
 
 

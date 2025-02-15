@@ -12,6 +12,14 @@
         values (#{roleName});
     </insert>
 
+    <insert id="addAuthorties" parameterType="java.util.List">
+        insert into Role_Permission (role_id, authority_id)
+        values
+            <foreach collection="list" item="ra" separator=",">
+                (#{ra.roleId}, #{ra.authorityId})
+            </foreach>
+    </insert>
+
     <!--update-->
     <update id="updateRole" parameterType="com.ticketbox.auth_service.entity.Role">
         update Roles
