@@ -11,7 +11,7 @@ public interface AuthorityService {
 
     AuthorityRes add(AuthorityCreateReq authorityCreateReq);
 
-    AuthorityRes update(AuthorityUpdateReq authorityUpdateReq);
+    AuthorityRes update(int id, AuthorityUpdateReq authorityUpdateReq);
 
     PageRes<List<AuthorityRes>> findAll(int page, int pageSize, String sort, String direction);
 

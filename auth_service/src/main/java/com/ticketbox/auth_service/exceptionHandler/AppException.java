@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.flywaydb.core.api.ErrorCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

@@ -15,6 +15,6 @@ public class NotAlphaNumericValidator implements ConstraintValidator<NotAlphaNum
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (Objects.isNull(value)) return true;
-        return value.matches("^[a-zA-Z]+$");
+        return value.matches("^[a-zA-Z_]+$");
     }
 }

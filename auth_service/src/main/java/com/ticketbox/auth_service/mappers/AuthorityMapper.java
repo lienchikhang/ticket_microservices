@@ -13,10 +13,13 @@ public interface AuthorityMapper {
 
     int addAuthority(Authority authority);
 
-    @Select("select * from Authorties where authority_id = #{id}")
+    @Select("select * from Authorities where authority_id = #{id}")
     Optional<Authority> findById(int id);
 
-    @Select("select distinct count(authority_name) from Authorties where authority_name = #{name}")
+    @Select("select * from Authorities where authority_name = #{name}")
+    Optional<Authority> findByName(String name);
+
+    @Select("select distinct count(authority_name) from Authorities where authority_name = #{name}")
     int isNameExist(String name);
 
     @Select("select count(authority_id) from Authorities where is_active = 1")

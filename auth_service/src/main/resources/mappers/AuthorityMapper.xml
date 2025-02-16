@@ -18,31 +18,31 @@
         from Authorities
         <if test="sort != null">
             order by ${sort}
+            <choose>
+                <when test="direction == 'desc'">desc</when>
+                <otherwise>asc</otherwise>
+            </choose>
         </if>
-        <choose>
-            <when test="direction == 'desc'">desc</when>
-            <otherwise>asc</otherwise>
-        </choose>
-        limit #{pageSize} offset #{offset}
+        limit ${pageSize} offset ${offSet}
     </select>
 
     <!--update-->
     <update id="updateAuthority" parameterType="com.ticketbox.auth_service.entity.Authority">
         update Authorities
-        set updated_at = NOW()
         <set>
-            <if test="authorityName != null">authority_name = #{authorityName},</if>
-            <if test="isActive != null">is_active = #{isActive},</if>
+            updated_at = NOW()
+            <if test="authorityName != null">, authority_name = #{authorityName}</if>
+            <if test="isActive != null">, is_active = #{isActive}</if>
         </set>
         where authority_id = #{authorityId}
     </update>
 
     <!--resultMap-->
     <resultMap id="authorityResultMap" type="com.ticketbox.auth_service.entity.Authority">
-        <id column="authority_id" property="authorityId" javaType="int" jdbcType="int" />
-        <result column="authority_name" property="authorityName" jdbcType="varchar" javaType="String"/>
-        <result column="is_active" property="isActive" jdbcType="boolean" javaType="boolean"/>
-        <result column="created_at" property="createdAt" jdbcType="datetime" javaType="LocalDatetime"/>
-        <result column="updated_at" property="updatedAt" jdbcType="datetime" javaType="LocalDatetime"/>
+        <id column="authority_id" property="authorityId" javaType="int" jdbcType="INTEGER" />
+        <result column="authority_name" property="authorityName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
     </resultMap>
 </mapper>

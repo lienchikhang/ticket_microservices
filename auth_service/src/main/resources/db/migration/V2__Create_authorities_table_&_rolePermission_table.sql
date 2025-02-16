@@ -4,7 +4,7 @@ create table Authorities (
      authority_name varchar(20) not null unique,
      is_active boolean default true,
      created_at datetime,
-     update_at datetime
+     updated_at datetime
 );
 
 create table Role_Permission (

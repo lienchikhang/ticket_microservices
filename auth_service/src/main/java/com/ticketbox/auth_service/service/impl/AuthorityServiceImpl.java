@@ -4,25 +4,33 @@ import com.ticketbox.auth_service.dto.request.AuthorityCreateReq;
 import com.ticketbox.auth_service.dto.request.AuthorityUpdateReq;
 import com.ticketbox.auth_service.dto.response.AuthorityRes;
 import com.ticketbox.auth_service.dto.response.PageRes;
+import com.ticketbox.auth_service.entity.Authority;
 import com.ticketbox.auth_service.enums.ErrorEnum;
 import com.ticketbox.auth_service.exceptionHandler.AppException;
 import com.ticketbox.auth_service.mappers.AuthorityMapper;
+import com.ticketbox.auth_service.mapstruct.AuthorityStruct;
 import com.ticketbox.auth_service.service.AuthorityService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
+@Slf4j
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class AuthorityServiceImpl implements AuthorityService {
 
     AuthorityMapper authorityMapper;
+    AuthorityStruct authorityStruct;
 
     @Override
+    @Transactional
     public AuthorityRes add(AuthorityCreateReq authorityCreateReq) {
 
         //check exist
@@ -30,28 +38,67 @@ public class AuthorityServiceImpl implements AuthorityService {
             throw new AppException(ErrorEnum.AUTHORITY_ALREADY_EXISTS);
 
         //add
-//        authorityMapper.addAuthority()
+        authorityMapper.addAuthority(authorityStruct.toAuthority(authorityCreateReq));
 
-        return null;
+        return authorityStruct.toRes(authorityMapper.findByName(authorityCreateReq.getAuthorityName()).orElse(null));
     }
 
     @Override
-    public AuthorityRes update(AuthorityUpdateReq authorityUpdateReq) {
-        return null;
+    @Transactional
+    public AuthorityRes update(int id, AuthorityUpdateReq authorityUpdateReq) {
+
+        //check exist
+        Authority authority = authorityMapper.findById(id)
+                .orElseThrow(() -> new AppException(ErrorEnum.AUTHORITY_NOT_FOUND));
+
+        if (Objects.nonNull(authorityUpdateReq.getAuthorityName())) {
+            authority.setAuthorityName(authorityUpdateReq.getAuthorityName());
+        }
+
+        //update
+        authorityMapper.updateAuthority(authority);
+
+        return authorityStruct.toRes(authorityMapper.findById(id).orElse(null));
     }
 
     @Override
     public PageRes<List<AuthorityRes>> findAll(int page, int pageSize, String sort, String direction) {
-        return null;
+
+        log.info("sort {}", sort);
+        log.info("direction {}", direction);
+
+        //get authorities
+        List<AuthorityRes> authorityResList = authorityMapper.findAll(pageSize, (page - 1) * pageSize, sort, direction)
+                .stream().map(authorityStruct::toRes).toList();
+
+        //get totalItem
+        int totalItem = authorityMapper.count();
+
+        return PageRes.<List<AuthorityRes>>builder()
+                .totalItem(totalItem)
+                .items(authorityResList)
+                .pageSize(pageSize)
+                .page(page)
+                .build();
     }
 
     @Override
     public AuthorityRes findById(int id) {
-        return null;
+        return authorityStruct.toRes(authorityMapper.findById(id)
+                .orElseThrow(() -> new AppException(ErrorEnum.AUTHORITY_NOT_FOUND)));
     }
 
     @Override
     public AuthorityRes delete(int id) {
-        return null;
+
+        //check exist
+        Authority authority = authorityMapper.findById(id)
+                .orElseThrow(() -> new AppException(ErrorEnum.AUTHORITY_NOT_FOUND));
+
+        //update
+        authority.setIsActive(false);
+        authorityMapper.updateAuthority(authority);
+
+        return authorityStruct.toRes(authorityMapper.findById(id).orElse(null));
     }
 }
