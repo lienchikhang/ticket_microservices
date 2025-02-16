@@ -1,9 +1,12 @@
 package com.ticketbox.auth_service.dto.request;
 
 import com.ticketbox.auth_service.validations.NotAlphaNumeric;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -11,7 +14,11 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoleUpdateReq {
-    @NotEmpty(message = "NOT_EMPTY_ROLE")
+
     @NotAlphaNumeric(message = "INVALID_ROLE_NAME")
     String roleName;
+
+    @Nullable
+    Set<String> authorities;
+
 }

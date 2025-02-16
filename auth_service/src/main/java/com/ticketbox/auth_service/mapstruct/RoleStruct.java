@@ -11,10 +11,14 @@ import org.mapstruct.Mappings;
 public interface RoleStruct {
      @Mappings({
              @Mapping(target = "roleId", ignore = true),
-             @Mapping(target = "isActive", ignore = true)
+             @Mapping(target = "isActive", ignore = true),
+             @Mapping(target = "authorities", ignore = true)
      })
      Role toRole(RoleCreateReq roleCreateReq);
 
-     @Mapping(target = "isActive", source = "isActive")
+     @Mappings({
+             @Mapping(target = "isActive", source = "isActive"),
+             @Mapping(target = "authorities", ignore = true)
+     })
      RoleRes toRes(Role role);
 }

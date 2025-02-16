@@ -10,6 +10,7 @@ import com.ticketbox.auth_service.enums.ErrorEnum;
 import com.ticketbox.auth_service.exceptionHandler.AppException;
 import com.ticketbox.auth_service.mappers.AuthorityMapper;
 import com.ticketbox.auth_service.mappers.RoleMapper;
+import com.ticketbox.auth_service.mapstruct.AuthorityStruct;
 import com.ticketbox.auth_service.mapstruct.RoleStruct;
 import com.ticketbox.auth_service.service.RoleService;
 import lombok.AccessLevel;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -29,8 +31,10 @@ public class RoleServiceImpl implements RoleService {
     RoleMapper mapper;
     AuthorityMapper authorityMapper;
     RoleStruct roleStruct;
+    AuthorityStruct authorityStruct;
 
     @Override
+    @Transactional
     public RoleRes add(RoleCreateReq role) {
 
         //checking exist
@@ -38,15 +42,26 @@ public class RoleServiceImpl implements RoleService {
             throw new AppException(ErrorEnum.ROLE_ALREADY_EXISTS);
         }
 
+        Set<Authority> newAuthorities = new HashSet<>();
+        role.getAuthorities().forEach((au) -> {
+            Authority authority = authorityMapper.findByName(au)
+                    .orElseThrow(() -> new AppException(ErrorEnum.AUTHORITY_NOT_FOUND));
+
+            newAuthorities.add(authority);
+        });
+
         //add new role
         mapper.addRole(roleStruct.toRole(role));
+        Role r = mapper.findRoleByName(role.getRoleName())
+                .orElseThrow(() -> new AppException(ErrorEnum.AUTHORITY_NOT_FOUND));
+        mapper.addAuthorities(r.getRoleId(),newAuthorities);
 
         //return
         return roleStruct.toRes(roleStruct.toRole(role));
     }
 
     @Override
-    public RoleRes addAuthorities(List<Authority> authors) {
+    public RoleRes addAuthorities(Set<Authority> authorities) {
         return null;
     }
 
@@ -63,16 +78,37 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Transactional
     public RoleRes update(int id, RoleUpdateReq roleUpdateReq) {
 
         //checking exist
         Role role = mapper.findRoleById(id).orElseThrow(() -> new AppException(ErrorEnum.ROLE_NOT_FOUND));
 
+        //checking props
+        if (Objects.nonNull(roleUpdateReq.getRoleName())) {
+            role.setRoleName(roleUpdateReq.getRoleName());
+        }
+
+        Set<Authority> newAuthorities = new HashSet<>();
+        if (Objects.nonNull(roleUpdateReq.getAuthorities())) {
+            roleUpdateReq.getAuthorities()
+                    .forEach((au) -> {
+                        newAuthorities.add(authorityMapper.findByName(au)
+                                .orElseThrow(() -> new AppException(ErrorEnum.AUTHORITY_NOT_FOUND)));
+                    });
+
+            mapper.addAuthorities(role.getRoleId(), newAuthorities);
+        }
+
         //update
-        role.setRoleName(roleUpdateReq.getRoleName());
         mapper.updateRole(role);
 
-        return roleStruct.toRes(role);
+        //result
+        RoleRes res = roleStruct.toRes(mapper.findRoleWithAuthoritiesById(role.getRoleId())
+                .orElseThrow(() -> new AppException(ErrorEnum.ROLE_NOT_FOUND)));
+        res.setAuthorities(newAuthorities);
+
+        return res;
     }
 
     @Override
@@ -84,8 +120,16 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public PageRes<List<RoleRes>> getAll(String direction, int page, int pageSize) {
 
-        List<RoleRes> roles = mapper.findAll(direction, (page - 1) * pageSize, pageSize).stream()
-                .map(roleStruct::toRes).toList();
+        List<RoleRes> roles = mapper.findAll(direction, (page - 1) * pageSize, pageSize)
+                .stream().map((role) -> {
+            RoleRes ri = roleStruct.toRes(role);
+            if (Objects.nonNull(role.getAuthorities())) {
+                Set<Authority> authorities = new HashSet<>();
+                authorities.addAll(role.getAuthorities());
+                ri.setAuthorities(authorities);
+            }
+            return ri;
+        }).toList();
 
         int totalItem = mapper.count();
 

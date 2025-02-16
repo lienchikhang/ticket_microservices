@@ -8,12 +8,13 @@ import com.ticketbox.auth_service.entity.Authority;
 import com.ticketbox.auth_service.entity.Role;
 
 import java.util.List;
+import java.util.Set;
 
 public interface RoleService {
 
     RoleRes add(RoleCreateReq role);
 
-    RoleRes addAuthorities(List<Authority> authors);
+    RoleRes addAuthorities(Set<Authority> authorities);
 
     RoleRes delete(int id);
 

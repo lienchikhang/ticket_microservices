@@ -12,6 +12,7 @@
         values (#{authorityName}, now(), now())
     </insert>
 
+
     <!--select-->
     <select id="findAll" resultMap="authorityResultMap">
         select *

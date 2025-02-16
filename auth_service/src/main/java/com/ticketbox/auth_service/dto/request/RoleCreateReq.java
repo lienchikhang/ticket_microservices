@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Set;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,4 +14,5 @@ import lombok.experimental.FieldDefaults;
 public class RoleCreateReq {
     @NotEmpty(message = "NOT_EMPTY_ROLE")
     String roleName;
+    Set<String> authorities;
 }
