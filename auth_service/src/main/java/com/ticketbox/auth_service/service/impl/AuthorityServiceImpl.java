@@ -5,9 +5,11 @@ import com.ticketbox.auth_service.dto.request.AuthorityUpdateReq;
 import com.ticketbox.auth_service.dto.response.AuthorityRes;
 import com.ticketbox.auth_service.dto.response.PageRes;
 import com.ticketbox.auth_service.entity.Authority;
+import com.ticketbox.auth_service.entity.Role;
 import com.ticketbox.auth_service.enums.ErrorEnum;
 import com.ticketbox.auth_service.exceptionHandler.AppException;
 import com.ticketbox.auth_service.mappers.AuthorityMapper;
+import com.ticketbox.auth_service.mappers.RoleMapper;
 import com.ticketbox.auth_service.mapstruct.AuthorityStruct;
 import com.ticketbox.auth_service.service.AuthorityService;
 import lombok.AccessLevel;
@@ -27,6 +29,7 @@ import java.util.Objects;
 public class AuthorityServiceImpl implements AuthorityService {
 
     AuthorityMapper authorityMapper;
+    RoleMapper roleMapper;
     AuthorityStruct authorityStruct;
 
     @Override
@@ -59,6 +62,17 @@ public class AuthorityServiceImpl implements AuthorityService {
         authorityMapper.updateAuthority(authority);
 
         return authorityStruct.toRes(authorityMapper.findById(id).orElse(null));
+    }
+
+    @Override
+    public List<AuthorityRes> getUnsignedAuthoritiesByRoleId(int id) {
+        //check exist
+        Role existedRole = roleMapper.findRoleById(id).orElseThrow(() -> new AppException(ErrorEnum.ROLE_NOT_FOUND));
+
+        List<AuthorityRes> unSignAuthorities = authorityMapper.findUnsignedAuthoritiesByRoleId(existedRole.getRoleId())
+                .stream().map(authorityStruct::toRes).toList();
+
+        return unSignAuthorities;
     }
 
     @Override

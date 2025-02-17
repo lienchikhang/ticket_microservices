@@ -3,6 +3,7 @@ package com.ticketbox.auth_service.controller;
 import com.ticketbox.auth_service.dto.request.RoleCreateReq;
 import com.ticketbox.auth_service.dto.request.RoleUpdateReq;
 import com.ticketbox.auth_service.dto.response.AppResponse;
+import com.ticketbox.auth_service.dto.response.AuthorityRes;
 import com.ticketbox.auth_service.dto.response.PageRes;
 import com.ticketbox.auth_service.dto.response.RoleRes;
 import com.ticketbox.auth_service.service.RoleService;

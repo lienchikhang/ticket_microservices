@@ -1,5 +1,6 @@
 package com.ticketbox.auth_service.mappers;
 
+import com.ticketbox.auth_service.dto.response.AuthorityRes;
 import com.ticketbox.auth_service.entity.Authority;
 import com.ticketbox.auth_service.entity.Role;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,8 +25,6 @@ public interface RoleMapper {
     Optional<Role> findRoleWithAuthoritiesById(int roleId);
 
     Optional<Role> findRoleByName(String name);
-
-    List<Role> findUnsignedAuthoritiesByRoleId(int roleId);
 
     List<Role> findAll(@Param("direction") String direction,
                        @Param("offSet") int offSet,

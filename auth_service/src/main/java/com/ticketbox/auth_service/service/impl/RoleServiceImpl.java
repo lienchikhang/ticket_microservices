@@ -2,6 +2,7 @@ package com.ticketbox.auth_service.service.impl;
 
 import com.ticketbox.auth_service.dto.request.RoleCreateReq;
 import com.ticketbox.auth_service.dto.request.RoleUpdateReq;
+import com.ticketbox.auth_service.dto.response.AuthorityRes;
 import com.ticketbox.auth_service.dto.response.PageRes;
 import com.ticketbox.auth_service.dto.response.RoleRes;
 import com.ticketbox.auth_service.entity.Authority;
@@ -58,11 +59,6 @@ public class RoleServiceImpl implements RoleService {
 
         //return
         return roleStruct.toRes(roleStruct.toRole(role));
-    }
-
-    @Override
-    public RoleRes addAuthorities(Set<Authority> authorities) {
-        return null;
     }
 
     @Override

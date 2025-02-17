@@ -27,6 +27,19 @@
         limit ${pageSize} offset ${offSet}
     </select>
 
+    <select id="findUnsignedAuthoritiesByRoleId"
+            resultMap="authorityResultMap"
+            parameterType="int"
+    >
+        SELECT authority_id, authority_name
+        from Authorities
+        WHERE authority_id not in (SELECT a.authority_id
+                                   FROM Roles r
+                                            inner join Role_Permission rp on rp.role_id = r.role_id
+                                            inner join Authorities a on a.authority_id = rp.authority_id
+                                   WHERE r.role_id = ${roleId})
+    </select>
+
     <!--update-->
     <update id="updateAuthority" parameterType="com.ticketbox.auth_service.entity.Authority">
         update Authorities

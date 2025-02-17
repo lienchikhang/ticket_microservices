@@ -62,20 +62,6 @@
         LIMIT #{pageSize} OFFSET #{offSet}
     </select>
 
-    <select id="findUnsignedAuthoritiesByRoleId"
-            resultMap="userResultMapWithAuthorities"
-            parameterType="int"
-    >
-        SELECT authority_id, authority_name
-        from Authorities
-        WHERE authority_id not in (SELECT a.authority_id
-        FROM Roles r
-        inner join Role_Permission rp on rp.role_id = r.role_id
-        inner join Authorities a on a.authority_id = rp.authority_id
-        WHERE r.role_id = ${roleId})
-    </select>
-
-
     <resultMap id="userResultMapWithAuthorities" type="com.ticketbox.auth_service.entity.Role" >
         <id column="role_id" property="roleId" javaType="int" jdbcType="INTEGER"  />
         <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>

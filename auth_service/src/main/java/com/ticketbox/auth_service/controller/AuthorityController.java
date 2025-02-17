@@ -31,6 +31,17 @@ public class AuthorityController {
                 .build();
     }
 
+    @GetMapping("/get-unSign-authorities-by-role/{id}")
+    public AppResponse<List<AuthorityRes>> getUnsignedAuthoritiesByRoleId(
+            @PathVariable(name = "id") int id
+    ) {
+        return AppResponse.<List<AuthorityRes>>builder()
+                .statusCode(200)
+                .data(authorityService.getUnsignedAuthoritiesByRoleId(id))
+                .message("Get successfully!")
+                .build();
+    }
+
     @GetMapping
     public AppResponse<PageRes<List<AuthorityRes>>> getAll(
             @RequestParam(name = "page", defaultValue = "1") int page,

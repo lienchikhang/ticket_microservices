@@ -13,6 +13,8 @@ public interface AuthorityService {
 
     AuthorityRes update(int id, AuthorityUpdateReq authorityUpdateReq);
 
+    List<AuthorityRes> getUnsignedAuthoritiesByRoleId(int id);
+
     PageRes<List<AuthorityRes>> findAll(int page, int pageSize, String sort, String direction);
 
     AuthorityRes findById(int id);

@@ -25,6 +25,8 @@ public interface AuthorityMapper {
     @Select("select count(authority_id) from Authorities where is_active = 1")
     int count();
 
+    List<Authority> findUnsignedAuthoritiesByRoleId(int roleId);
+
     List<Authority> findAll(@Param("pageSize") int pageSize,
                             @Param("offSet") int offSet,
                             @Param("sort") String sort,
