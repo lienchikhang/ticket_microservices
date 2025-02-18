@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ticketbox.auth_service.mappers.UserMapper">
+
+    <!--các truy vấn-->
+    <insert id="createUser"
+            parameterType="com.ticketbox.auth_service.entity.User"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        insert into Users (email, phone, password, first_name, last_name, gender, role_id )
+        values (#{email}, #{phone}, #{password}, #{firstName}, #{lastName}, #{gender}, #{roleId})
+    </insert>
+
+    <update id="updateUser">
+        update Users
+        <set>
+            updated_at = now(),
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="firstName != null">first_name = #{firstName},</if>
+            <if test="lastName != null">last_name = #{lastName},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="isActive != null">is_active = #{isActive}</if>
+        </set>
+        where id = ${userId}
+    </update>
+
+    <select id="getUserById" parameterType="int" resultMap="userResultMapWithRole">
+        select u.id, u.email, u.phone,
+               u.first_name, u.last_name, u.gender,
+               u.is_active, u.created_at, u.updated_at,
+               r.role_id, r.role_name, a.authority_id, a.authority_name
+        from Users u
+        left join Roles r on r.role_id = u.role_id
+        left join Role_Permission rp on rp.role_id = r.role_id
+        left join Authorities a on a.authority_id = rp.authority_id
+        where u.id = ${userId}
+    </select>
+
+    <select id="getUsers" resultMap="userResult">
+        select u.id, u.email, u.phone, u.first_name, u.last_name, u.gender, u.is_active, u.created_at, u.updated_at
+        from Users u
+        <where>
+            <if test="id != null">and id = #{id}</if>
+            <if test="phone != null">and phone = #{phone}</if>
+            <if test="fullName != null">and concat(last_name,' ',first_name) like concat('%', #{fullName}, '%')</if>
+            <if test="gender != null">and gender = #{gender}</if>
+            <if test="isActive != null">and is_active = #{isActive}</if>
+        </where>
+        <if test="sort != null">
+            order by #{sort}
+            <choose>
+                <when test="direction == 'asc'">asc</when>
+                <otherwise>desc</otherwise>
+            </choose>
+        </if>
+        limit ${limit} offset ${offSet}
+    </select>
+
+    <!--ánh xạ kết quả trả về-->
+
+    <resultMap id="userResult" type="com.ticketbox.auth_service.entity.User">
+        <id column="id" property="id" jdbcType="INTEGER" javaType="int"/>
+        <result column="email" property="email" jdbcType="VARCHAR" javaType="String"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR" javaType="String"/>
+        <result column="firstName" property="firstName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="lastName" property="lastName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="isActive" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
+        <result column="gender" property="gender" jdbcType="BIT" javaType="int"/>
+        <result column="createdAt" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="updatedAt" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <resultMap id="userResultMapWithRole" type="com.ticketbox.auth_service.entity.User">
+        <id column="id" property="id" jdbcType="INTEGER" javaType="int"/>
+        <result column="email" property="email" jdbcType="VARCHAR" javaType="String"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR" javaType="String"/>
+        <result column="firstName" property="firstName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="lastName" property="lastName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="isActive" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
+        <result column="gender" property="gender" jdbcType="BIT" javaType="int"/>
+        <result column="createdAt" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="updatedAt" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <association notNullColumn="role_id" property="role" javaType="com.ticketbox.auth_service.entity.Role">
+            <id column="role_id" property="roleId" jdbcType="INTEGER" javaType="int"/>
+            <result column="roleName" property="roleName" jdbcType="VARCHAR" javaType="String"/>
+            <collection property="authorities"
+                        ofType="com.ticketbox.auth_service.entity.Authority"
+                        notNullColumn="authority_id"
+            >
+                <id column="authority_id" property="authorityId" javaType="int" jdbcType="INTEGER"/>
+                <result column="authority_name" property="authorityName" jdbcType="VARCHAR" javaType="String"/>
+<!--                <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>-->
+<!--                <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>-->
+<!--                <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>-->
+            </collection>
+        </association>
+    </resultMap>
+</mapper>

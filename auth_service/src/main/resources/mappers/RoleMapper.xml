@@ -33,13 +33,13 @@
     </update>
 
     <!--queries-->
-    <select id="findRoleById" resultMap="userResultMap">
+    <select id="findRoleById" resultMap="roleResultMap">
         SELECT role_id, role_name, is_active
         FROM Roles
         WHERE role_id = #{roleId}
     </select>
 
-    <select id="findRoleWithAuthoritiesById" resultMap="userResultMapWithAuthorities">
+    <select id="findRoleWithAuthoritiesById" resultMap="roleResultMapWithAuthorities">
         SELECT *
         FROM Roles r
         left join Role_Permission rp on rp.role_id = r.role_id
@@ -47,13 +47,13 @@
         WHERE r.role_id = #{roleId}
     </select>
 
-    <select id="findRoleByName" resultMap="userResultMap" parameterType="String" >
+    <select id="findRoleByName" resultMap="roleResultMap" parameterType="String" >
         SELECT role_id, role_name, is_active
         FROM Roles
         WHERE role_name = #{roleName}
     </select>
 
-    <select id="findAll" resultMap="userResultMapWithAuthorities">
+    <select id="findAll" resultMap="roleResultMapWithAuthorities">
         SELECT *
         FROM Roles r
         left join Role_Permission rp on rp.role_id = r.role_id
@@ -62,7 +62,7 @@
         LIMIT #{pageSize} OFFSET #{offSet}
     </select>
 
-    <resultMap id="userResultMapWithAuthorities" type="com.ticketbox.auth_service.entity.Role" >
+    <resultMap id="roleResultMapWithAuthorities" type="com.ticketbox.auth_service.entity.Role" >
         <id column="role_id" property="roleId" javaType="int" jdbcType="INTEGER"  />
         <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
         <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="Boolean" />
@@ -78,7 +78,7 @@
         </collection>
     </resultMap>
 
-    <resultMap id="userResultMap" type="com.ticketbox.auth_service.entity.Role" >
+    <resultMap id="roleResultMap" type="com.ticketbox.auth_service.entity.Role" >
         <id column="role_id" property="roleId" javaType="int" jdbcType="INTEGER"  />
         <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
         <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="Boolean" />
