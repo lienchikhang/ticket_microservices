@@ -1,20 +1,29 @@
 package com.ticketbox.auth_service.mappers;
 
 import com.ticketbox.auth_service.entity.User;
-import org.mapstruct.Mapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
 
-    int createUser();
+    Integer createUser(User user);
 
-    User getUserById();
+    Optional<User> getUserById(Integer userId);
 
-    List<User> getUsers();
+    Integer countTotal(@Param("limit") int limit, @Param("offSet") int offSet,
+                       @Param("direction") String direction, @Param("sort") String sort,
+                       @Param("filter") Map<String, Object> filter);
 
-    int updateUser(int userId);
+    List<User> getUsers(@Param("limit") int limit, @Param("offSet") int offSet,
+                        @Param("direction") String direction, @Param("sort") String sort,
+                        @Param("filter") Map<String, Object> filter);
 
-//    int unActiveUser(int userId);
+    Integer updateUser(@Param("userId") Integer userId, @Param("filter")Map<String, Object> filter);
+
+    Integer isUserExisted(String email);
 }

@@ -9,20 +9,20 @@
             keyProperty="id"
             keyColumn="id">
         insert into Users (email, phone, password, first_name, last_name, gender, role_id )
-        values (#{email}, #{phone}, #{password}, #{firstName}, #{lastName}, #{gender}, #{roleId})
+        values (#{email}, #{phone}, #{password}, #{firstName}, #{lastName}, #{gender}, #{role.roleId})
     </insert>
 
     <update id="updateUser">
         update Users
         <set>
             updated_at = now(),
-            <if test="email != null">email = #{email},</if>
-            <if test="phone != null">phone = #{phone},</if>
-            <if test="password != null">password = #{password},</if>
-            <if test="firstName != null">first_name = #{firstName},</if>
-            <if test="lastName != null">last_name = #{lastName},</if>
-            <if test="gender != null">gender = #{gender},</if>
-            <if test="isActive != null">is_active = #{isActive}</if>
+            <if test="filter.email != null">email = #{filter.email},</if>
+            <if test="filter.phone != null">phone = #{filter.phone},</if>
+            <if test="filter.password != null">password = #{filter.password},</if>
+            <if test="filter.firstName != null">first_name = #{filter.firstName},</if>
+            <if test="filter.lastName != null">last_name = #{filter.lastName},</if>
+            <if test="filter.gender != null">gender = #{filter.gender},</if>
+            <if test="filter.isActive != null">is_active = #{filter.isActive}</if>
         </set>
         where id = ${userId}
     </update>
@@ -43,11 +43,10 @@
         select u.id, u.email, u.phone, u.first_name, u.last_name, u.gender, u.is_active, u.created_at, u.updated_at
         from Users u
         <where>
-            <if test="id != null">and id = #{id}</if>
-            <if test="phone != null">and phone = #{phone}</if>
-            <if test="fullName != null">and concat(last_name,' ',first_name) like concat('%', #{fullName}, '%')</if>
-            <if test="gender != null">and gender = #{gender}</if>
-            <if test="isActive != null">and is_active = #{isActive}</if>
+            <if test="filter.phone != null">and phone = #{filter.phone}</if>
+            <if test="filter.fullName != null">and concat(last_name,' ',first_name) like concat('%', #{filter.fullName}, '%')</if>
+            <if test="filter.gender != null">and gender = #{filter.gender}</if>
+            <if test="filter.isActive != null">and is_active = #{filter.isActive}</if>
         </where>
         <if test="sort != null">
             order by #{sort}
@@ -59,42 +58,65 @@
         limit ${limit} offset ${offSet}
     </select>
 
+    <select id="countTotal">
+        select count(u.id)
+        from Users u
+        <where>
+            <if test="filter.id != null">id = #{filter.id}</if>
+            <if test="filter.phone != null">and phone = #{filter.phone}</if>
+            <if test="filter.fullName != null">and concat(last_name,' ',first_name) like concat('%', #{filter.fullName}, '%')</if>
+            <if test="filter.gender != null">and gender = #{filter.gender}</if>
+            <if test="filter.isActive != null">and is_active = #{filter.isActive}</if>
+        </where>
+        <if test="sort != null">
+            order by #{sort}
+            <choose>
+                <when test="direction == 'asc'">asc</when>
+                <otherwise>desc</otherwise>
+            </choose>
+        </if>
+        limit ${limit} offset ${offSet}
+    </select>
+
+    <select id="isUserExisted" parameterType="String">
+        select count(id)
+        from Users
+        where email = #{email}
+    </select>
+
     <!--ánh xạ kết quả trả về-->
 
     <resultMap id="userResult" type="com.ticketbox.auth_service.entity.User">
         <id column="id" property="id" jdbcType="INTEGER" javaType="int"/>
         <result column="email" property="email" jdbcType="VARCHAR" javaType="String"/>
         <result column="phone" property="phone" jdbcType="VARCHAR" javaType="String"/>
-        <result column="firstName" property="firstName" jdbcType="VARCHAR" javaType="String"/>
-        <result column="lastName" property="lastName" jdbcType="VARCHAR" javaType="String"/>
-        <result column="isActive" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
+        <result column="first_name" property="firstName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="last_name" property="lastName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
         <result column="gender" property="gender" jdbcType="BIT" javaType="int"/>
-        <result column="createdAt" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
-        <result column="updatedAt" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
     </resultMap>
 
     <resultMap id="userResultMapWithRole" type="com.ticketbox.auth_service.entity.User">
         <id column="id" property="id" jdbcType="INTEGER" javaType="int"/>
         <result column="email" property="email" jdbcType="VARCHAR" javaType="String"/>
         <result column="phone" property="phone" jdbcType="VARCHAR" javaType="String"/>
-        <result column="firstName" property="firstName" jdbcType="VARCHAR" javaType="String"/>
-        <result column="lastName" property="lastName" jdbcType="VARCHAR" javaType="String"/>
-        <result column="isActive" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
+        <result column="first_name" property="firstName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="last_name" property="lastName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
         <result column="gender" property="gender" jdbcType="BIT" javaType="int"/>
-        <result column="createdAt" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
-        <result column="updatedAt" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
         <association notNullColumn="role_id" property="role" javaType="com.ticketbox.auth_service.entity.Role">
             <id column="role_id" property="roleId" jdbcType="INTEGER" javaType="int"/>
-            <result column="roleName" property="roleName" jdbcType="VARCHAR" javaType="String"/>
+            <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
             <collection property="authorities"
                         ofType="com.ticketbox.auth_service.entity.Authority"
                         notNullColumn="authority_id"
             >
                 <id column="authority_id" property="authorityId" javaType="int" jdbcType="INTEGER"/>
                 <result column="authority_name" property="authorityName" jdbcType="VARCHAR" javaType="String"/>
-<!--                <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>-->
-<!--                <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>-->
-<!--                <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>-->
             </collection>
         </association>
     </resultMap>

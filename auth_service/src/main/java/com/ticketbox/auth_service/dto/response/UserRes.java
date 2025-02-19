@@ -1,5 +1,8 @@
-package com.ticketbox.auth_service.entity;
+package com.ticketbox.auth_service.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.ticketbox.auth_service.entity.Role;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,15 +13,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User {
-    Integer id;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class UserRes {
+    int id;
     String email;
     String phone;
     String password;
     String firstName;
     String lastName;
     Boolean isActive;
-    Integer gender;
+    int gender;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     Role role;

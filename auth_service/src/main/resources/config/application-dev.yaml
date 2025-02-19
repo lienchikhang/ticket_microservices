@@ -23,4 +23,8 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
+logging:
+  level:
+    org:
+      mybatis: DEBUG
 #classpath:/com/example/**/mapper/*Mapper.xml
