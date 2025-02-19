@@ -84,6 +84,17 @@
         where email = #{email}
     </select>
 
+    <select id="getUserByEmail" parameterType="String">
+        select u.id, u.email, u.phone,
+               u.first_name, u.last_name, u.gender,
+               u.is_active, u.created_at, u.updated_at,
+               r.role_id, r.role_name, a.authority_id, a.authority_name
+        from Users u
+                 left join Roles r on r.role_id = u.role_id
+                 left join Role_Permission rp on rp.role_id = r.role_id
+                 left join Authorities a on a.authority_id = rp.authority_id
+        where u.email = #{email}
+    </select>
     <!--ánh xạ kết quả trả về-->
 
     <resultMap id="userResult" type="com.ticketbox.auth_service.entity.User">

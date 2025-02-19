@@ -26,4 +26,6 @@ public interface UserMapper {
     Integer updateUser(@Param("userId") Integer userId, @Param("filter")Map<String, Object> filter);
 
     Integer isUserExisted(String email);
+
+    Optional<User> getUserByEmail(String email);
 }
