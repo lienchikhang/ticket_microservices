@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ticketbox.auth_service.mappers.KeyTokenMapper">
+
+    <insert id="save"
+            parameterType="com.ticketbox.auth_service.entity.KeyToken"
+            keyColumn="user_id"
+            keyProperty="userId">
+        insert into KeyTokens (user_id, public_key, refresh_token)
+        values (#{userId}, #{publicKey}, #{refreshToken})
+    </insert>
+
+    <select id="getKeyTokenByUserId" parameterType="int" resultMap="keyTokenResultMap">
+        select *
+        from KeyTokens
+        where user_id = #{userId}
+    </select>
+
+    <!--ResultMap-->
+    <resultMap id="keyTokenResultMap" type="com.ticketbox.auth_service.entity.KeyToken">
+        <id column="user_id" property="userId" javaType="int" jdbcType="INTEGER"/>
+        <result column="public_key" property="publicKey" jdbcType="LONGVARCHAR" javaType="String"/>
+        <result column="refresh_token" property="refreshToken" jdbcType="LONGVARCHAR" javaType="String"/>
+    </resultMap>
+
+</mapper>

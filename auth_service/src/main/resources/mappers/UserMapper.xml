@@ -84,7 +84,7 @@
         where email = #{email}
     </select>
 
-    <select id="getUserByEmail" parameterType="String">
+    <select id="getUserByEmail" parameterType="String" resultMap="userResultMapWithRole">
         select u.id, u.email, u.phone,
                u.first_name, u.last_name, u.gender,
                u.is_active, u.created_at, u.updated_at,

@@ -5,6 +5,7 @@ import com.ticketbox.auth_service.dto.request.UserUpdateReq;
 import com.ticketbox.auth_service.dto.request.UserUpdateStatusReq;
 import com.ticketbox.auth_service.dto.response.AppResponse;
 import com.ticketbox.auth_service.dto.response.PageRes;
+import com.ticketbox.auth_service.dto.response.RegisterRes;
 import com.ticketbox.auth_service.dto.response.UserRes;
 import com.ticketbox.auth_service.service.UserService;
 import jakarta.validation.Valid;
@@ -64,12 +65,12 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public AppResponse<Void> createUser(
+    public AppResponse<RegisterRes> createUser(
             @RequestBody @Valid UserCreateReq req
             ) {
-        userService.createUser(req);
-        return AppResponse.<Void>builder()
+        return AppResponse.<RegisterRes>builder()
                 .code(201)
+                .data(userService.createUser(req))
                 .message("User created!")
                 .build();
     }

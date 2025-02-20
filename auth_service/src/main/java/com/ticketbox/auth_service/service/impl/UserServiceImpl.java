@@ -3,15 +3,20 @@ package com.ticketbox.auth_service.service.impl;
 import com.ticketbox.auth_service.dto.request.UserCreateReq;
 import com.ticketbox.auth_service.dto.request.UserUpdateReq;
 import com.ticketbox.auth_service.dto.response.PageRes;
+import com.ticketbox.auth_service.dto.response.RegisterRes;
 import com.ticketbox.auth_service.dto.response.UserRes;
+import com.ticketbox.auth_service.entity.KeyToken;
 import com.ticketbox.auth_service.entity.Role;
 import com.ticketbox.auth_service.entity.User;
 import com.ticketbox.auth_service.enums.ErrorEnum;
 import com.ticketbox.auth_service.exceptionHandler.AppException;
+import com.ticketbox.auth_service.mappers.KeyTokenMapper;
 import com.ticketbox.auth_service.mappers.RoleMapper;
 import com.ticketbox.auth_service.mappers.UserMapper;
 import com.ticketbox.auth_service.mapstruct.UserStruct;
 import com.ticketbox.auth_service.service.UserService;
+import com.ticketbox.auth_service.utils.keyGenerator.RSAKeyGenerator;
+import com.ticketbox.auth_service.utils.token.Token;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +27,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +43,7 @@ public class UserServiceImpl implements UserService {
     //xml
     UserMapper userMapper;
     RoleMapper roleMapper;
+    KeyTokenMapper keyTokenMapper;
 
     //struct
     UserStruct userStruct;
@@ -45,7 +53,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void createUser(UserCreateReq req) {
+    public RegisterRes createUser(UserCreateReq req) {
 
         //CHECKING: is user existed?
         if (userMapper.isUserExisted(req.getEmail()) == 1)
@@ -53,7 +61,6 @@ public class UserServiceImpl implements UserService {
 
         //SECURITY: hash password
         User newUser = userStruct.toUser(req);
-        log.info("user {}", newUser.toString());
         String hashedPassword = passwordEncoder.encode(newUser.getPassword());
         newUser.setPassword(hashedPassword);
 
@@ -64,8 +71,41 @@ public class UserServiceImpl implements UserService {
         //SECURITY: verify OTP (carry out later)
 
         //DBMS: save new user
-        log.info("user after hashing pass {}", newUser.toString());
         userMapper.createUser(newUser);
+
+        User user = userMapper.getUserByEmail(newUser.getEmail()).orElse(null);
+        if (Objects.nonNull(user)) {
+            //create publicKey, privateKey
+            try {
+                RSAKeyGenerator rsaKeyGenerator = new RSAKeyGenerator();
+                Map<String, Object> keys = rsaKeyGenerator.generateKeys();
+
+                //TASK:: parse publicKey to PEM (Use Base64URl)
+                PublicKey publicKey = (PublicKey) keys.get("publicKey");
+                String publicKeyString = RSAKeyGenerator.encodeKey(publicKey);
+
+                //save publicKey
+                keyTokenMapper.save(KeyToken.builder()
+                        .publicKey(publicKeyString)
+                        .userId(newUser.getId())
+                        .build());
+
+                //create tokens pair
+                Map<String, Object> tokens = Token.createTokenPair(user, keys.get("publicKey").toString(), (PrivateKey) keys.get("privateKey"));
+
+                return RegisterRes.builder()
+                        .user(newUser)
+                        .tokens(tokens)
+                        .build();
+            } catch (Exception e) {
+                log.error("error in if scope: {}",e.getMessage());
+            }
+
+        }
+
+        return RegisterRes.builder()
+                .user(newUser)
+                .build();
     }
 
     @Override

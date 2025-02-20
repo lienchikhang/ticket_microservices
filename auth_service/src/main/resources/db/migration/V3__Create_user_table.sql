@@ -13,3 +13,10 @@ create table Users (
 
   foreign key (role_id) references Roles(role_id)
 );
+
+-- #This bellow table is use for store userId and publicKey
+create table KeyTokens (
+    user_id int not null primary key,
+    public_key text not null,
+    refresh_token text
+);
