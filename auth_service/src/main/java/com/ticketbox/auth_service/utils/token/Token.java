@@ -16,7 +16,7 @@ import java.util.*;
 @Slf4j
 public class Token {
 
-        public static Map<String, Object> createTokenPair(User payload, String publicKey, PrivateKey privateKey) throws JOSEException, ParseException {
+        public static Map<String, Object> createTokenPair(User payload, PrivateKey privateKey) throws JOSEException, ParseException {
 
         //initialize
         Map<String, Object> result = new HashMap<>();
@@ -40,6 +40,10 @@ public class Token {
             scope.add(authority.getAuthorityName());
         }));
         return scope.toString();
+    }
+
+    public static JWSObject parseToken(String token) throws ParseException {
+            return JWSObject.parse(token);
     }
 
 

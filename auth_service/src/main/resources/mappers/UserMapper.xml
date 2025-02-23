@@ -84,10 +84,10 @@
         where email = #{email}
     </select>
 
-    <select id="getUserByEmail" parameterType="String" resultMap="userResultMapWithRole">
+    <select id="getUserByEmail" parameterType="String" resultMap="userResultMapWithRoleAndPassword">
         select u.id, u.email, u.phone,
                u.first_name, u.last_name, u.gender,
-               u.is_active, u.created_at, u.updated_at,
+               u.is_active, u.created_at, u.updated_at, u.password,
                r.role_id, r.role_name, a.authority_id, a.authority_name
         from Users u
                  left join Roles r on r.role_id = u.role_id
@@ -113,6 +113,30 @@
         <id column="id" property="id" jdbcType="INTEGER" javaType="int"/>
         <result column="email" property="email" jdbcType="VARCHAR" javaType="String"/>
         <result column="phone" property="phone" jdbcType="VARCHAR" javaType="String"/>
+        <result column="first_name" property="firstName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="last_name" property="lastName" jdbcType="VARCHAR" javaType="String"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>
+        <result column="gender" property="gender" jdbcType="BIT" javaType="int"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" javaType="java.time.LocalDateTime"/>
+        <association notNullColumn="role_id" property="role" javaType="com.ticketbox.auth_service.entity.Role">
+            <id column="role_id" property="roleId" jdbcType="INTEGER" javaType="int"/>
+            <result column="role_name" property="roleName" jdbcType="VARCHAR" javaType="String"/>
+            <collection property="authorities"
+                        ofType="com.ticketbox.auth_service.entity.Authority"
+                        notNullColumn="authority_id"
+            >
+                <id column="authority_id" property="authorityId" javaType="int" jdbcType="INTEGER"/>
+                <result column="authority_name" property="authorityName" jdbcType="VARCHAR" javaType="String"/>
+            </collection>
+        </association>
+    </resultMap>
+
+    <resultMap id="userResultMapWithRoleAndPassword" type="com.ticketbox.auth_service.entity.User">
+        <id column="id" property="id" jdbcType="INTEGER" javaType="int"/>
+        <result column="email" property="email" jdbcType="VARCHAR" javaType="String"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR" javaType="String"/>
+        <result column="password" property="password" jdbcType="VARCHAR" javaType="String"/>
         <result column="first_name" property="firstName" jdbcType="VARCHAR" javaType="String"/>
         <result column="last_name" property="lastName" jdbcType="VARCHAR" javaType="String"/>
         <result column="is_active" property="isActive" jdbcType="BOOLEAN" javaType="boolean"/>

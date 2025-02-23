@@ -88,13 +88,14 @@ public class UserServiceImpl implements UserService {
                 keyTokenMapper.save(KeyToken.builder()
                         .publicKey(publicKeyString)
                         .userId(newUser.getId())
+                        .refreshToken("")
                         .build());
 
                 //create tokens pair
-                Map<String, Object> tokens = Token.createTokenPair(user, keys.get("publicKey").toString(), (PrivateKey) keys.get("privateKey"));
+                Map<String, Object> tokens = Token.createTokenPair(user, (PrivateKey) keys.get("privateKey"));
 
                 return RegisterRes.builder()
-                        .user(newUser)
+                        .user(userStruct.toProxyRes(newUser))
                         .tokens(tokens)
                         .build();
             } catch (Exception e) {
@@ -104,7 +105,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return RegisterRes.builder()
-                .user(newUser)
+                .user(userStruct.toProxyRes(newUser))
                 .build();
     }
 

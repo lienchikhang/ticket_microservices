@@ -16,7 +16,9 @@ create table Users (
 
 -- #This bellow table is use for store userId and publicKey
 create table KeyTokens (
-    user_id int not null primary key,
+    user_id int not null,
     public_key text not null,
-    refresh_token text
+    refresh_token varchar(255) default '',
+
+    primary key (user_id, refresh_token)
 );

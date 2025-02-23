@@ -2,8 +2,6 @@ package com.ticketbox.auth_service.utils.keyGenerator;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-
-import javax.crypto.KeyGenerator;
 import java.security.*;
 import java.util.Base64;
 import java.util.HashMap;

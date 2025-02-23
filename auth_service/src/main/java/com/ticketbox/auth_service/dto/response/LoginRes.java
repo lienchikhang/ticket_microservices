@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginRes {
+    UserRes user;
     String accessToken;
     String freshToken;
     LocalDateTime at;

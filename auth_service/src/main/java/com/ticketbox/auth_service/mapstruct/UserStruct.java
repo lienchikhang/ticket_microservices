@@ -19,4 +19,12 @@ public interface UserStruct {
     User toUser(UserUpdateReq req);
 
     UserRes toRes(User user);
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "password", ignore = true),
+            @Mapping(target = "isActive", ignore = true),
+            @Mapping(target = "role", ignore = true),
+    })
+    UserRes toProxyRes(User user);
 }

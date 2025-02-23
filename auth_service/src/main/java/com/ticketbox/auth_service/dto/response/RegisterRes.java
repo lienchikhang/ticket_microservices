@@ -14,6 +14,6 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RegisterRes {
-    User user;
+    UserRes user;
     Map<String, Object> tokens;
 }
