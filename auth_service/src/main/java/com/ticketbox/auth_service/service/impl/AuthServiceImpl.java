@@ -2,6 +2,11 @@ package com.ticketbox.auth_service.service.impl;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.ticketbox.auth_service.dto.request.LoginReq;
 import com.ticketbox.auth_service.dto.response.LoginRes;
 import com.ticketbox.auth_service.dto.response.UserRes;
@@ -27,10 +32,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -101,8 +110,42 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean introspect() {
-        return null;
+    public Boolean introspect(String token) throws ParseException, NoSuchAlgorithmException {
+
+        /**
+         * parse token into JWSObject
+         * get userId from sub and check in KeyStore table whether it existed or not
+         * -> if not (user has never logged in before) -> false
+         *
+         * verify token
+         * after verifying, check userId from decode vs sub
+         * -> if equals -> true
+         *
+         */
+
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+
+        //check in KeyStore table whether it existed or not
+        KeyToken keyToken = keyTokenMapper.getKeyTokenByUserId(Integer.parseInt(claimsSet.getSubject())).orElse(null);
+        if (Objects.isNull(keyToken)) return false;
+
+        //handling public key
+        PublicKey publicKey = RSAKeyGenerator.decodePublicKey(keyToken.getPublicKey());
+
+        //get expirationTime
+        Date expirationTime = claimsSet.getExpirationTime();
+
+        JWSVerifier jwsVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
+
+        try {
+            if (signedJWT.verify(jwsVerifier) && expirationTime.after(Date.from(Instant.now()))) return true;
+        } catch (Exception e) {
+            log.error("error in introspect token: {}",e.getMessage());
+        }
+
+        return false;
+
     }
 
     @Override

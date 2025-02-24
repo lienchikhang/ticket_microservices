@@ -33,6 +33,8 @@ public enum ErrorEnum {
     NOT_EMPTY_PHONE(1018, 400, "Password must not be empty!"),
     NOT_EMPTY_STATUS(1019, 400, "Status must not be empty!"),
     INVALID_INFORMATION(1020, 400, "Email or password is wrong!"),
+    INVALID_REQUEST(1021, 400, "Invalid request!"),
+    INVALID_DECODE_PUBLIC(1022, 500, "Failed to decode publicKey!"),
     ;
 
     ErrorEnum(int code, int statusCode, String message) {

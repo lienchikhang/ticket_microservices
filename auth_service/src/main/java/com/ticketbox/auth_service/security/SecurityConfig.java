@@ -1,5 +1,6 @@
 package com.ticketbox.auth_service.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,6 +10,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    @Autowired
+    JwtDecoderCustom jwtDecoderCustom;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -16,6 +20,13 @@ public class SecurityConfig {
         http.authorizeHttpRequests(req -> {
             req.anyRequest().permitAll();
         });
+
+        http.oauth2ResourceServer((oauth2ResourceServer) ->
+                oauth2ResourceServer
+                        .jwt((jwt) ->
+                                jwt.decoder(jwtDecoderCustom)
+                        )
+        );
 
         //other config
         http.csrf(AbstractHttpConfigurer::disable);

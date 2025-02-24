@@ -11,7 +11,7 @@ public interface AuthService {
 
     LoginRes login(LoginReq req) throws NoSuchAlgorithmException, ParseException, JOSEException;
 
-    Boolean introspect();
+    Boolean introspect(String token) throws ParseException, NoSuchAlgorithmException;
 
     void logout();
 }
