@@ -33,14 +33,20 @@ public class RedisHashServiceImpl implements RedisHashService {
     }
 
     @Override
-    public Object getFromHash(String key, String field) {
-        return hashOperations.get(key, field);
+    public String getFromHash(String key, String field) {
+        return (String)hashOperations.get(key, field);
     }
 
     @Override
     public Map<String, Object> getAllFromHash(String key) {
         return hashOperations.entries(key);
     }
+
+    @Override
+    public Integer exists(String key) {
+        return hashOperations.values(key).size();
+    }
+
 
     @Override
     public void deleteFromHash(String key, String field) {

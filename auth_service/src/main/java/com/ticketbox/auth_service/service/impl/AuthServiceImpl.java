@@ -8,6 +8,7 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.ticketbox.auth_service.dto.request.LoginReq;
+import com.ticketbox.auth_service.dto.response.IntrospectRes;
 import com.ticketbox.auth_service.dto.response.LoginRes;
 import com.ticketbox.auth_service.dto.response.UserRes;
 import com.ticketbox.auth_service.entity.KeyToken;
@@ -18,6 +19,7 @@ import com.ticketbox.auth_service.mappers.KeyTokenMapper;
 import com.ticketbox.auth_service.mappers.UserMapper;
 import com.ticketbox.auth_service.mapstruct.UserStruct;
 import com.ticketbox.auth_service.service.AuthService;
+import com.ticketbox.auth_service.service.RedisHashService;
 import com.ticketbox.auth_service.utils.keyGenerator.RSAKeyGenerator;
 import com.ticketbox.auth_service.utils.token.Token;
 import lombok.AccessLevel;
@@ -56,19 +58,16 @@ public class AuthServiceImpl implements AuthService {
 
     //others
     PasswordEncoder passwordEncoder;
+    RedisHashService redisHashService;
 
     @Override
     @Transactional
     public LoginRes login(LoginReq req) throws NoSuchAlgorithmException, ParseException, JOSEException {
 
-        log.info("email {}", req.getEmail());
-        log.info("pass {}", req.getPassword());
 
         //CHECKING: user exist
         User existedUser = userMapper.getUserByEmail(req.getEmail())
                 .orElseThrow(() -> new AppException(ErrorEnum.INVALID_INFORMATION));
-
-        log.info("user {}", existedUser.getCreatedAt());
 
         //CHECKING: password
         if (!passwordEncoder.matches(req.getPassword(), existedUser.getPassword()))
@@ -93,13 +92,17 @@ public class AuthServiceImpl implements AuthService {
 
         //task: save publicKey to dbms
         //microtask: get refresh ID
-        JWSObject jwsObject = Token.parseToken((String)tokens.get("refreshToken"));
+        SignedJWT signedJWT = SignedJWT.parse((String)tokens.get("refreshToken"));
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
-        keyTokenMapper.save(KeyToken.builder()
-                .publicKey(publicKeyString)
-                .userId(existedUser.getId())
-                .refreshToken((String) jwsObject.getPayload().toJSONObject().get("jti"))
-                .build());
+        redisHashService.saveToHas(String.valueOf(existedUser.getId()), "refreshToken", claimsSet.getJWTID());
+        redisHashService.saveToHas(String.valueOf(existedUser.getId()), "publicKey", publicKeyString);
+
+//        keyTokenMapper.save(KeyToken.builder()
+//                .publicKey(publicKeyString)
+//                .userId(existedUser.getId())
+//                .refreshToken((String) jwsObject.getPayload().toJSONObject().get("jti"))
+//                .build());
 
         return LoginRes.builder()
                 .at(LocalDateTime.now())
@@ -110,7 +113,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean introspect(String token) throws ParseException, NoSuchAlgorithmException {
+    public IntrospectRes introspect(String token) throws ParseException, NoSuchAlgorithmException {
+
+        //init
+        IntrospectRes res = IntrospectRes.builder()
+                .isValid(false)
+                .build();
 
         /**
          * parse token into JWSObject
@@ -127,11 +135,14 @@ public class AuthServiceImpl implements AuthService {
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
         //check in KeyStore table whether it existed or not
-        KeyToken keyToken = keyTokenMapper.getKeyTokenByUserId(Integer.parseInt(claimsSet.getSubject())).orElse(null);
-        if (Objects.isNull(keyToken)) return false;
+        if (redisHashService.exists(String.valueOf(claimsSet.getSubject())).equals(0)) return res;
+
+//        KeyToken keyToken = keyTokenMapper.getKeyTokenByUserId(Integer.parseInt(claimsSet.getSubject())).orElse(null);
+//        if (Objects.isNull(keyToken)) return false;
 
         //handling public key
-        PublicKey publicKey = RSAKeyGenerator.decodePublicKey(keyToken.getPublicKey());
+        PublicKey publicKey = RSAKeyGenerator.decodePublicKey(redisHashService
+                .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey"));
 
         //get expirationTime
         Date expirationTime = claimsSet.getExpirationTime();
@@ -139,12 +150,15 @@ public class AuthServiceImpl implements AuthService {
         JWSVerifier jwsVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
 
         try {
-            if (signedJWT.verify(jwsVerifier) && expirationTime.after(Date.from(Instant.now()))) return true;
+            if (signedJWT.verify(jwsVerifier) && expirationTime.after(Date.from(Instant.now()))) {
+                res.setIsValid(true);
+                return res;
+            }
         } catch (Exception e) {
             log.error("error in introspect token: {}",e.getMessage());
         }
 
-        return false;
+        return res;
 
     }
 

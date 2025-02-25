@@ -7,9 +7,13 @@ public interface RedisHashService {
 
      void saveToHas(String key, String field, Object value);
 
-     Object getFromHash(String key, String field);
+     String getFromHash(String key, String field);
 
      Map<String, Object> getAllFromHash(String key);
+
+//     Object getFromHash(String key);
+
+     Integer exists(String key);
 
      void deleteFromHash(String key, String field);
 

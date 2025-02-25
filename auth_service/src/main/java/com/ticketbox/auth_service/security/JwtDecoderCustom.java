@@ -4,12 +4,15 @@ import com.nimbusds.jwt.SignedJWT;
 import com.ticketbox.auth_service.entity.KeyToken;
 import com.ticketbox.auth_service.mappers.KeyTokenMapper;
 import com.ticketbox.auth_service.service.AuthService;
+import com.ticketbox.auth_service.service.RedisHashService;
 import com.ticketbox.auth_service.utils.keyGenerator.RSAKeyGenerator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -17,15 +20,17 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
 
 import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Objects;
 
+@Slf4j
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class JwtDecoderCustom implements JwtDecoder {
 
     AuthService authService;
-    KeyTokenMapper keyTokenMapper;
+    RedisHashService redisHashService;
 
     @NonFinal
     NimbusJwtDecoder nimbusJwtDecoder;
@@ -33,18 +38,28 @@ public class JwtDecoderCustom implements JwtDecoder {
     @Override
     public Jwt decode(String token) throws JwtException {
         try {
-            if (!authService.introspect(token)) throw new JwtException("Token Invalid!");
+            Boolean isValidToken = authService.introspect(token).getIsValid();
+            if (!isValidToken) throw new AuthenticationException("INVALID_TOKEN"){};
         } catch (Exception e) {
-            throw new JwtException(e.getMessage());
+            throw new AuthenticationException("INVALID_TOKEN"){};
         }
 
-//        if (Objects.isNull(nimbusJwtDecoder)) {
-//
-//            //handling public key
-//            PublicKey publicKey = RSAKeyGenerator.decodePublicKey(keyToken.getPublicKey());
-//
-//            nimbusJwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
-//        }
+
+        if (Objects.isNull(nimbusJwtDecoder)) {
+            try {
+                SignedJWT signedJWT = SignedJWT.parse(token);
+                JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+
+                PublicKey publicKey = RSAKeyGenerator.decodePublicKey(redisHashService
+                        .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey"));
+
+                nimbusJwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) publicKey)
+                        .build();
+
+            } catch (Exception e) {
+                log.error("JWT Decoding Error", e.getMessage());
+            }
+        }
 
         return nimbusJwtDecoder.decode(token);
     }

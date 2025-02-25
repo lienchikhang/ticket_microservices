@@ -1,5 +1,6 @@
 package com.ticketbox.auth_service.security;
 
+import com.ticketbox.auth_service.exceptionHandler.HandlingFilterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ public class SecurityConfig {
                         .jwt((jwt) ->
                                 jwt.decoder(jwtDecoderCustom)
                         )
+                        .authenticationEntryPoint(new HandlingFilterException())
         );
 
         //other config
