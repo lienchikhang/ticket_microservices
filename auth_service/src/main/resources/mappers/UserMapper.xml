@@ -84,6 +84,12 @@
         where email = #{email}
     </select>
 
+    <select id="isPhoneExisted" parameterType="String">
+        select count(id)
+        from Users
+        where phone = #{phone}
+    </select>
+
     <select id="getUserByEmail" parameterType="String" resultMap="userResultMapWithRoleAndPassword">
         select u.id, u.email, u.phone,
                u.first_name, u.last_name, u.gender,

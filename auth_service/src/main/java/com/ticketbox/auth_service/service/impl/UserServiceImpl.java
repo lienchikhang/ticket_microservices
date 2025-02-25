@@ -59,6 +59,10 @@ public class UserServiceImpl implements UserService {
         if (userMapper.isUserExisted(req.getEmail()) == 1)
             throw new AppException(ErrorEnum.USER_ALREADY_EXISTS);
 
+        //CHECKING: is phone existed?
+        if (userMapper.isPhoneExisted(req.getPhone()) == 1)
+            throw new AppException(ErrorEnum.USER_PHONE_EXISTED);
+
         //SECURITY: hash password
         User newUser = userStruct.toUser(req);
         String hashedPassword = passwordEncoder.encode(newUser.getPassword());

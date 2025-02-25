@@ -18,24 +18,33 @@ public class HandlingFilterException implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-
         //init
         ObjectMapper objectMapper = new ObjectMapper();
-        ErrorEnum errorEnum = ErrorEnum.valueOf(authException.getMessage());
+        ErrorEnum errorEnum;
 
-        //create own custom response
-        AppResponse appResponse = AppResponse.builder()
-                .code(errorEnum.getCode())
-                .statusCode(errorEnum.getStatusCode())
-                .message(errorEnum.getMessage())
-                .build();
+        try {
 
-        //config response
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(appResponse));
+            if (authException.getClass().getSimpleName().equals("InsufficientAuthenticationException"))
+                errorEnum = ErrorEnum.INVALID_TOKEN;
+            else
+                errorEnum = ErrorEnum.valueOf(authException.getMessage());
 
-        //return
-        response.flushBuffer();
+            //create own custom response
+            AppResponse appResponse = AppResponse.builder()
+                    .code(errorEnum.getCode())
+                    .statusCode(errorEnum.getStatusCode())
+                    .message(errorEnum.getMessage())
+                    .build();
+
+            //config response
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write(objectMapper.writeValueAsString(appResponse));
+
+            //return
+            response.flushBuffer();
+        } catch (Exception e) {
+            log.error("Error in handling authentication exception", e.getMessage());
+        }
     }
 }

@@ -55,7 +55,8 @@ public class RedisHashServiceImpl implements RedisHashService {
 
     @Override
     public void deleteFromHash(String key) {
-        hashOperations.delete(key);
+        String[] fields = {"refreshToken", "publicKey"};
+        hashOperations.delete(key, (Object[]) fields);
     }
 
     @Override

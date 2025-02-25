@@ -35,8 +35,11 @@ public enum ErrorEnum {
     INVALID_INFORMATION(1020, 400, "Email or password is wrong!"),
     INVALID_REQUEST(1021, 400, "Invalid request!"),
     INVALID_DECODE_PUBLIC(1022, 500, "Failed to decode publicKey!"),
+    USER_PHONE_EXISTED(1023, 400, "Phone has already existed!"),
 
-    INVALID_TOKEN(1023, 400, "Invalid token!"),
+    INVALID_TOKEN(1024, 400, "Invalid token!"),
+    INTERNAL_ERROR(1025, 500, "Internal Server Error!"),
+    ACCESS_DENIED(1026, 403, "Access denied!"),
     ;
 
     ErrorEnum(int code, int statusCode, String message) {

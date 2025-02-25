@@ -27,5 +27,7 @@ public interface UserMapper {
 
     Integer isUserExisted(String email);
 
+    Integer isPhoneExisted(String phone);
+
     Optional<User> getUserByEmail(String email);
 }

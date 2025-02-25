@@ -14,5 +14,5 @@ public interface AuthService {
 
     IntrospectRes introspect(String token) throws ParseException, NoSuchAlgorithmException;
 
-    void logout();
+    void logout(String token) throws ParseException;
 }

@@ -4,6 +4,8 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.ticketbox.auth_service.entity.User;
+import com.ticketbox.auth_service.enums.ErrorEnum;
+import com.ticketbox.auth_service.exceptionHandler.AppException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.security.Key;
@@ -16,21 +18,22 @@ import java.util.*;
 @Slf4j
 public class Token {
 
-        public static Map<String, Object> createTokenPair(User payload, PrivateKey privateKey) throws JOSEException, ParseException {
+    public static Map<String, Object> createTokenPair(User payload, PrivateKey privateKey) {
 
-        //initialize
-        Map<String, Object> result = new HashMap<>();
+        try {
+            //initialize
+            Map<String, Object> result = new HashMap<>();
 
-        //refreshToken
-        JWSObject jwsObjectRefresh = createRefreshToken(payload, privateKey);
-        String refreshedToken = jwsObjectRefresh.serialize();
+            //refreshToken & accessToken
+            JWSObject jwsObjectRefresh = createRefreshToken(payload, privateKey);
+            JWSObject jwsObjectAccess = createAccessToken(payload,jwsObjectRefresh, privateKey);
+            result.put("refreshToken", jwsObjectRefresh.serialize());
+            result.put("accessToken", jwsObjectAccess.serialize());
 
-        //accessToken
-        JWSObject jwsObjectAccess = createAccessToken(payload,jwsObjectRefresh, privateKey);
-
-        result.put("refreshToken", refreshedToken);
-        result.put("accessToken", jwsObjectAccess.serialize());
-        return result;
+            return result;
+        }catch (JOSEException | ParseException e) {
+            throw new AppException(ErrorEnum.INTERNAL_ERROR);
+        }
     }
 
     private static String buildScope(User user) {
@@ -40,10 +43,6 @@ public class Token {
             scope.add(authority.getAuthorityName());
         }));
         return scope.toString();
-    }
-
-    public static JWSObject parseToken(String token) throws ParseException {
-            return JWSObject.parse(token);
     }
 
 
