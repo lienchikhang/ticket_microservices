@@ -16,6 +16,7 @@ import com.ticketbox.auth_service.mappers.UserMapper;
 import com.ticketbox.auth_service.mapstruct.UserStruct;
 import com.ticketbox.auth_service.service.AuthService;
 import com.ticketbox.auth_service.service.RedisHashService;
+import com.ticketbox.auth_service.utils.KeyStoreUtil;
 import com.ticketbox.auth_service.utils.keyGenerator.RSAKeyGenerator;
 import com.ticketbox.auth_service.utils.token.Token;
 import lombok.AccessLevel;
@@ -57,7 +58,6 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public LoginRes login(LoginReq req) throws NoSuchAlgorithmException, ParseException {
 
-
         //CHECKING: user exist
         User existedUser = userMapper.getUserByEmail(req.getEmail())
                 .orElseThrow(() -> new AppException(ErrorEnum.INVALID_INFORMATION));
@@ -66,37 +66,29 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(req.getPassword(), existedUser.getPassword()))
             throw new AppException(ErrorEnum.INVALID_INFORMATION);
 
-        /**
-         * CREATE TOKEN
-         * task: create a key pair for signing token
-         * task: create access token & refresh token
-         * task: save publicKey & refreshToken to dbms
-         * task: send both tokens back to the client
-         * */
+        try {
+            //get privateKey
+            PrivateKey privateKey = KeyStoreUtil.getUserPrivateKey(String.valueOf(existedUser.getId()),
+                    KeyStoreUtil.loadOrCreateKeyStore());
 
-        //task: create a key pair for signing token
-        RSAKeyGenerator rsaKeyGenerator = new RSAKeyGenerator();
-        Map<String, Object> keyPair = rsaKeyGenerator.generateKeys();
-        PublicKey publicKey = (PublicKey) keyPair.get("publicKey");
-        String publicKeyString = RSAKeyGenerator.encodeKey(publicKey);
+            //create new pair tokens
+            Map<String, Object> tokens = Token.createTokenPair(existedUser, privateKey);
+            SignedJWT signedJWT = SignedJWT.parse((String) tokens.get("refreshToken"));
+            JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
-        //task: create access token & refresh token
-        Map<String, Object> tokens = Token.createTokenPair(existedUser, (PrivateKey) keyPair.get("privateKey"));
+            //update refreshTokenID
+            redisHashService.saveToHas(String.valueOf(existedUser.getId()), "refreshToken", claimsSet.getJWTID());
 
-        //microtask: get refresh ID
-        SignedJWT signedJWT = SignedJWT.parse((String)tokens.get("refreshToken"));
-        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+            return LoginRes.builder()
+                    .at(LocalDateTime.now())
+                    .accessToken((String) tokens.get("accessToken"))
+                    .freshToken((String) tokens.get("refreshToken"))
+                    .user(userStruct.toProxyRes(existedUser))
+                    .build();
 
-        //save publicKey to dbms
-        redisHashService.saveToHas(String.valueOf(existedUser.getId()), "refreshToken", claimsSet.getJWTID());
-        redisHashService.saveToHas(String.valueOf(existedUser.getId()), "publicKey", publicKeyString);
-
-        return LoginRes.builder()
-                .at(LocalDateTime.now())
-                .accessToken((String)tokens.get("accessToken"))
-                .freshToken((String)tokens.get("refreshToken"))
-                .user(userStruct.toProxyRes(existedUser))
-                .build();
+        } catch (Exception e) {
+            throw new AppException(ErrorEnum.CANNOT_GET_PRIVATE_KEY);
+        }
     }
 
     @Override
@@ -107,34 +99,27 @@ public class AuthServiceImpl implements AuthService {
         IntrospectRes res = IntrospectRes.builder()
                 .isValid(false)
                 .build();
-
-        /**
-         * parse token into JWSObject
-         * get userId from sub and check in KeyStore table whether it existed or not
-         * -> if not (user has never logged in before) -> false
-         *
-         * verify token
-         * after verifying, check userId from decode vs sub
-         * -> if equals -> true
-         *
-         */
-
         SignedJWT signedJWT = SignedJWT.parse(token);
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
-        //check in KeyStore table whether it existed or not
-        if (redisHashService.exists(String.valueOf(claimsSet.getSubject())).equals(0)) return res;
+        //check whether user has logged in or not
+        if (!redisHashService.exists(String.valueOf(claimsSet.getSubject()))) return res;
 
-        //handling public key
-        PublicKey publicKey = RSAKeyGenerator.decodePublicKey(redisHashService
-                .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey"));
+        //check current token is valid (only valid when token's refreshID == refreshID in redis)
+        if (!redisHashService.getFromHash(String.valueOf(claimsSet.getSubject()), "refreshToken")
+                .equals(claimsSet.getClaim("refreshId"))) return res;
+
+        //retrieve public key
+        String pbKeyStr = redisHashService
+                .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey");
+        PublicKey publicKey = RSAKeyGenerator.decodePublicKey(pbKeyStr);
 
         //get expirationTime
         Date expirationTime = claimsSet.getExpirationTime();
 
-        JWSVerifier jwsVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
-
+        //verify token
         try {
+            JWSVerifier jwsVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
             if (signedJWT.verify(jwsVerifier) && expirationTime.after(Date.from(Instant.now()))) {
                 res.setIsValid(true);
                 return res;
@@ -144,7 +129,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return res;
-
     }
 
     @Override
@@ -154,8 +138,6 @@ public class AuthServiceImpl implements AuthService {
         //parse token into claimsSet
         SignedJWT signedJWT = SignedJWT.parse(token);
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-
-        log.info("claimsSet id: {}",claimsSet.getSubject());
 
         //remove in keyStore
         redisHashService.deleteFromHash(String.valueOf(claimsSet.getSubject()));

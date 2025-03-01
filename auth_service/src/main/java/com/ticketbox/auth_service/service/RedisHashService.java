@@ -13,7 +13,7 @@ public interface RedisHashService {
 
 //     Object getFromHash(String key);
 
-     Integer exists(String key);
+     Boolean exists(String key);
 
      void deleteFromHash(String key, String field);
 

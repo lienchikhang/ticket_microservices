@@ -23,7 +23,9 @@ public class HandlingFilterException implements AuthenticationEntryPoint {
         ErrorEnum errorEnum;
 
         try {
-
+            log.info("error type {}", authException.getClass().getSimpleName());
+            log.info("error message {}", authException.getMessage());
+            log.info("cause {}", authException.getCause());
             if (authException.getClass().getSimpleName().equals("InsufficientAuthenticationException"))
                 errorEnum = ErrorEnum.INVALID_TOKEN;
             else
@@ -44,7 +46,7 @@ public class HandlingFilterException implements AuthenticationEntryPoint {
             //return
             response.flushBuffer();
         } catch (Exception e) {
-            log.error("Error in handling authentication exception", e.getMessage());
+            log.error("Error in handling authentication exception {}", e.getMessage());
         }
     }
 }

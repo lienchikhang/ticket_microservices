@@ -41,24 +41,33 @@ public class JwtDecoderCustom implements JwtDecoder {
             Boolean isValidToken = authService.introspect(token).getIsValid();
             if (!isValidToken) throw new AuthenticationException("INVALID_TOKEN"){};
         } catch (Exception e) {
+            log.info("error in decode {}", e.getMessage());
             throw new AuthenticationException("INVALID_TOKEN"){};
         }
 
+        /**
+         * PROBLEM SOLVED:
+         * Because im implementing RSA algorithms to create and verify tokens
+         * and each user has their own unique key-pair including publicKey & privateKey.
+         * Therefore, when the user login into the system, they would receive both accessToken & refreshToken
+         * And when they send the accessToken for authentication, I have to retrieve their publicKey to verify that token.
+         * Therefore, we can't use the checking condition whether nimbusJwtDecoder object is null or not.
+         * Because if we use that checking condition, it'll ignore the inner logic so the current nimbusJwtDecoder object will have
+         * the previous publicKey. And it certainly will cause an error: Signed JWT rejected: Invalid signature
+         */
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(token);
+            JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+            String pbKeyStr = redisHashService
+                    .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey");
 
-        if (Objects.isNull(nimbusJwtDecoder)) {
-            try {
-                SignedJWT signedJWT = SignedJWT.parse(token);
-                JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+            PublicKey publicKey = RSAKeyGenerator.decodePublicKey(pbKeyStr);
 
-                PublicKey publicKey = RSAKeyGenerator.decodePublicKey(redisHashService
-                        .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey"));
+            nimbusJwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) publicKey)
+                    .build();
 
-                nimbusJwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) publicKey)
-                        .build();
-
-            } catch (Exception e) {
-                log.error("JWT Decoding Error", e.getMessage());
-            }
+        } catch (Exception e) {
+            log.error("JWT Decoding Error", e.getMessage());
         }
 
         return nimbusJwtDecoder.decode(token);

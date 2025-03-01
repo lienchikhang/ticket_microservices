@@ -45,7 +45,7 @@ public class AuthController {
                 .build();
     }
 
-    @PostMapping("/logout")
+    @DeleteMapping("/logout-user")
     public AppResponse<Void> logout(@RequestHeader("Authorization") String authentication) throws ParseException, NoSuchAlgorithmException {
         authService.logout(authentication.split(" ")[1]);
         return AppResponse.<Void>builder()

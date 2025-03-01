@@ -1,5 +1,7 @@
 package com.ticketbox.auth_service.service.impl;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.ticketbox.auth_service.dto.request.UserCreateReq;
 import com.ticketbox.auth_service.dto.request.UserUpdateReq;
 import com.ticketbox.auth_service.dto.response.PageRes;
@@ -14,7 +16,9 @@ import com.ticketbox.auth_service.mappers.KeyTokenMapper;
 import com.ticketbox.auth_service.mappers.RoleMapper;
 import com.ticketbox.auth_service.mappers.UserMapper;
 import com.ticketbox.auth_service.mapstruct.UserStruct;
+import com.ticketbox.auth_service.service.RedisHashService;
 import com.ticketbox.auth_service.service.UserService;
+import com.ticketbox.auth_service.utils.KeyStoreUtil;
 import com.ticketbox.auth_service.utils.keyGenerator.RSAKeyGenerator;
 import com.ticketbox.auth_service.utils.token.Token;
 import lombok.AccessLevel;
@@ -27,6 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.HashMap;
@@ -43,13 +48,13 @@ public class UserServiceImpl implements UserService {
     //xml
     UserMapper userMapper;
     RoleMapper roleMapper;
-    KeyTokenMapper keyTokenMapper;
 
     //struct
     UserStruct userStruct;
 
     //others
     PasswordEncoder passwordEncoder;
+    RedisHashService redisHashServiceImpl;
 
     @Override
     @Transactional
@@ -76,27 +81,29 @@ public class UserServiceImpl implements UserService {
 
         //DBMS: save new user
         userMapper.createUser(newUser);
-
         User user = userMapper.getUserByEmail(newUser.getEmail()).orElse(null);
+
         if (Objects.nonNull(user)) {
+
             //create publicKey, privateKey
             try {
                 RSAKeyGenerator rsaKeyGenerator = new RSAKeyGenerator();
-                Map<String, Object> keys = rsaKeyGenerator.generateKeys();
-
-                //TASK:: parse publicKey to PEM (Use Base64URl)
-                PublicKey publicKey = (PublicKey) keys.get("publicKey");
+                Map<String, Key> keyPair = rsaKeyGenerator.generateKeys(user);
+                PublicKey publicKey = (PublicKey) keyPair.get("publicKey");
                 String publicKeyString = RSAKeyGenerator.encodeKey(publicKey);
 
-                //save publicKey
-                keyTokenMapper.save(KeyToken.builder()
-                        .publicKey(publicKeyString)
-                        .userId(newUser.getId())
-                        .refreshToken("")
-                        .build());
+                PrivateKey privateKey = KeyStoreUtil.getUserPrivateKey(String.valueOf(user.getId()),
+                        KeyStoreUtil.loadOrCreateKeyStore());
 
                 //create tokens pair
-                Map<String, Object> tokens = Token.createTokenPair(user, (PrivateKey) keys.get("privateKey"));
+                Map<String, Object> tokens = Token.createTokenPair(user, privateKey);
+                SignedJWT signedJWT = SignedJWT.parse((String)tokens.get("refreshToken"));
+                JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+
+                //save publicKey
+                redisHashServiceImpl.deleteFromHash(String.valueOf(user.getId()));
+                redisHashServiceImpl.saveToHas(String.valueOf(user.getId()), "refreshToken", claimsSet.getJWTID());
+                redisHashServiceImpl.saveToHas(String.valueOf(user.getId()), "publicKey", publicKeyString);
 
                 return RegisterRes.builder()
                         .user(userStruct.toProxyRes(newUser))

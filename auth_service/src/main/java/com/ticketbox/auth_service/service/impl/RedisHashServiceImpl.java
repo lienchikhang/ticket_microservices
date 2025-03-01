@@ -43,8 +43,8 @@ public class RedisHashServiceImpl implements RedisHashService {
     }
 
     @Override
-    public Integer exists(String key) {
-        return hashOperations.values(key).size();
+    public Boolean exists(String key) {
+        return redisTemplate.hasKey(key);
     }
 
 

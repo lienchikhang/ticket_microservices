@@ -40,6 +40,8 @@ public enum ErrorEnum {
     INVALID_TOKEN(1024, 400, "Invalid token!"),
     INTERNAL_ERROR(1025, 500, "Internal Server Error!"),
     ACCESS_DENIED(1026, 403, "Access denied!"),
+    CANNOT_STORE_KEYSTORE(1027, 500, "Cannot store KeyStore"),
+    CANNOT_GET_PRIVATE_KEY(1027, 500, "Cannot retrieve privateKey"),
     ;
 
     ErrorEnum(int code, int statusCode, String message) {
