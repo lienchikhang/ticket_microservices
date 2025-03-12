@@ -180,7 +180,7 @@ public class AuthServiceImpl implements AuthService {
 
         //check:: date expiration
         Date expirationTime = claimsSet.getExpirationTime();
-        if (expirationTime.after(Date.from(Instant.now()))) throw new AppException(ErrorEnum.INVALID_TOKEN);
+        if (!expirationTime.after(Date.from(Instant.now()))) throw new AppException(ErrorEnum.INVALID_TOKEN);
 
         //create new tokens (access + refresh)
         try {
