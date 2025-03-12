@@ -18,7 +18,9 @@ public class SecurityConfig {
 
     private String[] PUBLIC_ENDPOINTS = {
             "/login",
-            "/users/create"
+            "/users/create",
+            "/refresh-token",
+            "/logout-user"
     };
 
     @Bean

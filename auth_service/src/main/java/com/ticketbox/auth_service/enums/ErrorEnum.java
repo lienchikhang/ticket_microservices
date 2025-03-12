@@ -37,7 +37,7 @@ public enum ErrorEnum {
     INVALID_DECODE_PUBLIC(1022, 500, "Failed to decode publicKey!"),
     USER_PHONE_EXISTED(1023, 400, "Phone has already existed!"),
 
-    INVALID_TOKEN(1024, 400, "Invalid token!"),
+    INVALID_TOKEN(1024, 401, "Invalid token!"),
     INTERNAL_ERROR(1025, 500, "Internal Server Error!"),
     ACCESS_DENIED(1026, 403, "Access denied!"),
     CANNOT_STORE_KEYSTORE(1027, 500, "Cannot store KeyStore"),

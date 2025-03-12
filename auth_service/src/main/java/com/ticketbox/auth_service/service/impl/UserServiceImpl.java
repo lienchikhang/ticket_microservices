@@ -55,6 +55,7 @@ public class UserServiceImpl implements UserService {
     //others
     PasswordEncoder passwordEncoder;
     RedisHashService redisHashServiceImpl;
+    private final RedisHashService redisHashService;
 
     @Override
     @Transactional
@@ -101,9 +102,8 @@ public class UserServiceImpl implements UserService {
                 JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
                 //save publicKey
-                redisHashServiceImpl.deleteFromHash(String.valueOf(user.getId()));
-                redisHashServiceImpl.saveToHas(String.valueOf(user.getId()), "refreshToken", claimsSet.getJWTID());
-                redisHashServiceImpl.saveToHas(String.valueOf(user.getId()), "publicKey", publicKeyString);
+                redisHashService.saveRefreshID(String.valueOf(user.getId()), claimsSet.getJWTID(), 3 * 1000 * 60);
+                redisHashService.savePublicKey(String.valueOf(user.getId()), publicKeyString);
 
                 return RegisterRes.builder()
                         .user(userStruct.toProxyRes(newUser))

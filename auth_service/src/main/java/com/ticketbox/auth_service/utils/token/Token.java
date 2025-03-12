@@ -63,7 +63,7 @@ public class Token {
                 .issuer("auth-service")
                 .issueTime(new Date())
                 .jwtID(UUID.randomUUID().toString())
-                .expirationTime(new Date(Instant.now().plus(50, ChronoUnit.MINUTES).toEpochMilli()))
+                .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
                 .claim("refreshId", jwtClaimsSetRefreshToken.getJWTID())
                 .claim("scope", buildScope(payload))
                 .subject(payload.getId().toString())

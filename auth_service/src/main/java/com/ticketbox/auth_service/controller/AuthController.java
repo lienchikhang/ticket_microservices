@@ -5,6 +5,7 @@ import com.ticketbox.auth_service.dto.request.LoginReq;
 import com.ticketbox.auth_service.dto.response.AppResponse;
 import com.ticketbox.auth_service.dto.response.IntrospectRes;
 import com.ticketbox.auth_service.dto.response.LoginRes;
+import com.ticketbox.auth_service.dto.response.RefreshRes;
 import com.ticketbox.auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -51,6 +52,15 @@ public class AuthController {
         return AppResponse.<Void>builder()
                 .code(200)
                 .message("Logout successfully!")
+                .build();
+    }
+
+    @PostMapping("/refresh-token")
+    public AppResponse<RefreshRes> refreshToken(@RequestHeader("x-refresh-token") String refreshToken) throws ParseException, NoSuchAlgorithmException {
+        return AppResponse.<RefreshRes>builder()
+                .code(200)
+                .message("Refresh token successfully!")
+                .data(authService.refreshToken(refreshToken))
                 .build();
     }
 

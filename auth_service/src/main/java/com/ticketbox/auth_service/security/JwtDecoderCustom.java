@@ -58,9 +58,7 @@ public class JwtDecoderCustom implements JwtDecoder {
         try {
             SignedJWT signedJWT = SignedJWT.parse(token);
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-            String pbKeyStr = redisHashService
-                    .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey");
-
+            String pbKeyStr = redisHashService.getPublicKey(String.valueOf(claimsSet.getSubject()));
             PublicKey publicKey = RSAKeyGenerator.decodePublicKey(pbKeyStr);
 
             nimbusJwtDecoder = NimbusJwtDecoder.withPublicKey((RSAPublicKey) publicKey)

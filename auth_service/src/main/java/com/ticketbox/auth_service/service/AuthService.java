@@ -4,6 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import com.ticketbox.auth_service.dto.request.LoginReq;
 import com.ticketbox.auth_service.dto.response.IntrospectRes;
 import com.ticketbox.auth_service.dto.response.LoginRes;
+import com.ticketbox.auth_service.dto.response.RefreshRes;
 
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
@@ -15,4 +16,6 @@ public interface AuthService {
     IntrospectRes introspect(String token) throws ParseException, NoSuchAlgorithmException;
 
     void logout(String token) throws ParseException;
+
+    RefreshRes refreshToken(String refreshToken) throws ParseException;
 }

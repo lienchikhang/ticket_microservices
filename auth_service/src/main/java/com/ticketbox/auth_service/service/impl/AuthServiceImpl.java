@@ -8,6 +8,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.ticketbox.auth_service.dto.request.LoginReq;
 import com.ticketbox.auth_service.dto.response.IntrospectRes;
 import com.ticketbox.auth_service.dto.response.LoginRes;
+import com.ticketbox.auth_service.dto.response.RefreshRes;
 import com.ticketbox.auth_service.entity.User;
 import com.ticketbox.auth_service.enums.ErrorEnum;
 import com.ticketbox.auth_service.exceptionHandler.AppException;
@@ -36,6 +37,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -45,7 +47,6 @@ public class AuthServiceImpl implements AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     //mappers
     UserMapper userMapper;
-    KeyTokenMapper keyTokenMapper;
 
     //structs
     UserStruct userStruct;
@@ -56,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public LoginRes login(LoginReq req) throws NoSuchAlgorithmException, ParseException {
+    public LoginRes login(LoginReq req) {
 
         //CHECKING: user exist
         User existedUser = userMapper.getUserByEmail(req.getEmail())
@@ -77,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
             //update refreshTokenID
-            redisHashService.saveToHas(String.valueOf(existedUser.getId()), "refreshToken", claimsSet.getJWTID());
+            redisHashService.saveRefreshID(String.valueOf(existedUser.getId()), claimsSet.getJWTID(), null);
 
             return LoginRes.builder()
                     .at(LocalDateTime.now())
@@ -106,12 +107,11 @@ public class AuthServiceImpl implements AuthService {
         if (!redisHashService.exists(String.valueOf(claimsSet.getSubject()))) return res;
 
         //check current token is valid (only valid when token's refreshID == refreshID in redis)
-        if (!redisHashService.getFromHash(String.valueOf(claimsSet.getSubject()), "refreshToken")
+        if (!redisHashService.getRefreshID(String.valueOf(claimsSet.getSubject()))
                 .equals(claimsSet.getClaim("refreshId"))) return res;
 
         //retrieve public key
-        String pbKeyStr = redisHashService
-                .getFromHash(String.valueOf(claimsSet.getSubject()), "publicKey");
+        String pbKeyStr = redisHashService.getPublicKey(String.valueOf(claimsSet.getSubject()));
         PublicKey publicKey = RSAKeyGenerator.decodePublicKey(pbKeyStr);
 
         //get expirationTime
@@ -139,8 +139,73 @@ public class AuthServiceImpl implements AuthService {
         SignedJWT signedJWT = SignedJWT.parse(token);
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
+        //check:: current refreshID vs token's refreshID
+        if (!redisHashService.getRefreshID(claimsSet.getSubject())
+                .equals(claimsSet.getClaim("refreshId"))) throw new AppException(ErrorEnum.INVALID_TOKEN);
+
         //remove in keyStore
         redisHashService.deleteFromHash(String.valueOf(claimsSet.getSubject()));
 
+    }
+
+    @Override
+    public RefreshRes refreshToken(String refreshToken) throws ParseException {
+
+        //get claimsSet
+        SignedJWT signedJWT = SignedJWT.parse(refreshToken);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+
+        //check:: user exist
+        User existedUser = userMapper.getUserById(Integer.parseInt(claimsSet.getSubject()))
+                .orElseThrow(() -> new AppException(ErrorEnum.USER_NOT_FOUND));
+
+        //check:: has user logged in yet?
+        String refreshID = redisHashService.getRefreshID(String.valueOf(existedUser.getId()));
+
+        if (Objects.isNull(refreshID)) throw new AppException(ErrorEnum.INVALID_TOKEN);
+
+        //compare refreshID in redis vs refreshID's request
+        if (!refreshID.equals(claimsSet.getJWTID())) throw new AppException(ErrorEnum.INVALID_TOKEN);
+
+        //get user's publicKey
+        String strPublicKey = redisHashService.getPublicKey(String.valueOf(existedUser.getId()));
+        PublicKey publicKey = RSAKeyGenerator.decodePublicKey(strPublicKey);
+
+        //verify token
+        try {
+            signedJWT.verify(new RSASSAVerifier((RSAPublicKey) publicKey));
+        } catch (Exception e) {
+            throw new AppException(ErrorEnum.INVALID_TOKEN);
+        }
+
+        //check:: date expiration
+        Date expirationTime = claimsSet.getExpirationTime();
+        if (expirationTime.after(Date.from(Instant.now()))) throw new AppException(ErrorEnum.INVALID_TOKEN);
+
+        //create new tokens (access + refresh)
+        try {
+            //get user's privateKey
+            PrivateKey privateKey = KeyStoreUtil.getUserPrivateKey(String.valueOf(existedUser.getId()),
+                    KeyStoreUtil.loadOrCreateKeyStore());
+
+            //create tokens
+            Map<String, Object> tokens = Token.createTokenPair(existedUser, privateKey);
+            String newRefreshToken = (String) tokens.get("refreshToken");
+
+            //update refreshId
+            signedJWT = SignedJWT.parse(newRefreshToken);
+            claimsSet = signedJWT.getJWTClaimsSet();
+            String newRefreshID = claimsSet.getJWTID();
+            redisHashService.saveRefreshID(String.valueOf(existedUser.getId()), newRefreshID, null);
+
+            return RefreshRes.builder()
+                    .at(LocalDateTime.now())
+                    .accessToken((String) tokens.get("accessToken"))
+                    .freshToken(newRefreshToken)
+                    .build();
+
+        } catch (Exception e) {
+            throw new AppException(ErrorEnum.CANNOT_GET_PRIVATE_KEY);
+        }
     }
 }
